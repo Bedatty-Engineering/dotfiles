@@ -70,6 +70,19 @@ alias kns="kubens"
 alias k="kubectl"
 alias awsp-clear="unset AWS_PROFILE AWS_REGION AWS_DEFAULT_REGION && echo 'AWS profile cleared.'"
 
+# eza (better ls)
+if command -v eza &>/dev/null; then
+  alias ls="eza --icons"
+  alias ll="eza --icons -lh"
+  alias la="eza --icons -lha"
+  alias lt="eza --icons --tree --level=2"
+fi
+
+# bat (better cat)
+if command -v bat &>/dev/null; then
+  alias cat="bat --paging=never"
+fi
+
 if [[ "$IS_WSL" -eq 1 ]]; then
   alias code="code.exe"
   alias explorer="explorer.exe"
@@ -349,7 +362,15 @@ export NVM_DIR="$HOME/.nvm"
 
 command -v direnv &>/dev/null && eval "$(direnv hook zsh)"
 
-# ----- 11. Integrations -----
+# ----- 11. zoxide -----
+
+command -v zoxide &>/dev/null && eval "$(zoxide init zsh)"
+
+# ----- 12. atuin -----
+
+command -v atuin &>/dev/null && eval "$(atuin init zsh)"
+
+# ----- 13. Integrations -----
 
 [[ "$TERM_PROGRAM" == "kiro" ]] && . "$(kiro --locate-shell-integration-path zsh)"
 export PATH="$HOME/.local/bin:$PATH"

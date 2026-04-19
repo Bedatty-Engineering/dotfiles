@@ -123,6 +123,109 @@ if ! is_installed direnv; then
   curl -fsSL https://direnv.net/install.sh | bash
 fi
 
+# Docker
+if ! is_installed docker; then
+  echo "==> Installing Docker"
+  curl -fsSL https://get.docker.com | bash
+  sudo usermod -aG docker "$USER"
+  echo "  Note: log out and back in for docker group to take effect"
+fi
+
+# Python3 + pip + pipx
+if ! is_installed python3; then
+  echo "==> Installing Python3"
+  sudo apt-get install -y -qq python3 python3-pip python3-venv pipx
+fi
+if ! is_installed pipx; then
+  sudo apt-get install -y -qq pipx
+  pipx ensurepath
+fi
+
+# Helm
+if ! is_installed helm; then
+  echo "==> Installing Helm"
+  curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+fi
+
+# k9s
+if ! is_installed k9s; then
+  echo "==> Installing k9s"
+  K9S_VERSION="$(curl -fsSL https://api.github.com/repos/derailed/k9s/releases/latest | grep tag_name | cut -d'"' -f4)"
+  curl -fsSLo /tmp/k9s.tar.gz "https://github.com/derailed/k9s/releases/download/${K9S_VERSION}/k9s_Linux_amd64.tar.gz"
+  tar -xzf /tmp/k9s.tar.gz -C /tmp k9s
+  sudo install -m 0755 /tmp/k9s /usr/local/bin/k9s
+  rm /tmp/k9s.tar.gz /tmp/k9s
+fi
+
+# stern (multi-pod log tailing)
+if ! is_installed stern; then
+  echo "==> Installing stern"
+  STERN_VERSION="$(curl -fsSL https://api.github.com/repos/stern/stern/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d v)"
+  curl -fsSLo /tmp/stern.tar.gz "https://github.com/stern/stern/releases/download/v${STERN_VERSION}/stern_${STERN_VERSION}_linux_amd64.tar.gz"
+  tar -xzf /tmp/stern.tar.gz -C /tmp stern
+  sudo install -m 0755 /tmp/stern /usr/local/bin/stern
+  rm /tmp/stern.tar.gz /tmp/stern
+fi
+
+# kustomize
+if ! is_installed kustomize; then
+  echo "==> Installing kustomize"
+  curl -fsSL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+  sudo mv kustomize /usr/local/bin/kustomize
+fi
+
+# AWS Session Manager Plugin
+if ! is_installed session-manager-plugin; then
+  echo "==> Installing AWS Session Manager Plugin"
+  curl -fsSLo /tmp/ssm-plugin.deb "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb"
+  sudo dpkg -i /tmp/ssm-plugin.deb
+  rm /tmp/ssm-plugin.deb
+fi
+
+# zoxide (smarter cd)
+if ! is_installed zoxide; then
+  echo "==> Installing zoxide"
+  curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
+fi
+
+# bat (better cat)
+if ! is_installed bat; then
+  echo "==> Installing bat"
+  sudo apt-get install -y -qq bat || \
+    { BAT_VERSION="$(curl -fsSL https://api.github.com/repos/sharkdp/bat/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d v)"
+      curl -fsSLo /tmp/bat.deb "https://github.com/sharkdp/bat/releases/download/v${BAT_VERSION}/bat_${BAT_VERSION}_amd64.deb"
+      sudo dpkg -i /tmp/bat.deb && rm /tmp/bat.deb; }
+fi
+
+# eza (better ls)
+if ! is_installed eza; then
+  echo "==> Installing eza"
+  sudo apt-get install -y -qq gpg
+  wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
+  echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" | sudo tee /etc/apt/sources.list.d/gierens.list
+  sudo apt-get update -qq && sudo apt-get install -y -qq eza
+fi
+
+# delta (better git diff)
+if ! is_installed delta; then
+  echo "==> Installing delta"
+  DELTA_VERSION="$(curl -fsSL https://api.github.com/repos/dandavison/delta/releases/latest | grep tag_name | cut -d'"' -f4)"
+  curl -fsSLo /tmp/delta.deb "https://github.com/dandavison/delta/releases/download/${DELTA_VERSION}/git-delta_${DELTA_VERSION}_amd64.deb"
+  sudo dpkg -i /tmp/delta.deb && rm /tmp/delta.deb
+fi
+
+# atuin (shell history sync)
+if ! is_installed atuin; then
+  echo "==> Installing atuin"
+  curl -fsSL https://setup.atuin.sh | bash
+fi
+
+# tmux plugin manager (tpm)
+if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
+  echo "==> Installing tmux plugin manager"
+  git clone --depth=1 https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+fi
+
 # VS Code
 if ! is_installed code; then
   echo "==> Installing VS Code"
