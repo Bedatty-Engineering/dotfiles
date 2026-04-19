@@ -1,0 +1,13 @@
+Host *
+  AddKeysToAgent yes
+  IdentityFile ~/.ssh/lerian_github_key
+  ServerAliveInterval 60
+  ServerAliveCountMax 3
+
+# Example jump host:
+# Host bastion
+#   HostName bastion.example.com
+#   User ubuntu
+#
+# Host internal-*
+#   ProxyJump bastion

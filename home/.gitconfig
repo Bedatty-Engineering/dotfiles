@@ -1,4 +1,6 @@
 # This is Git's per-user configuration file.
+[core]
+	excludesfile = ~/.gitignore_global
 [user]
 	name = Lucas Bedatty
 	email = lucas.bedatty@lerian.studio

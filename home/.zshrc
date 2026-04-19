@@ -345,7 +345,11 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
-# ----- 10. Integrations -----
+# ----- 10. direnv -----
+
+command -v direnv &>/dev/null && eval "$(direnv hook zsh)"
+
+# ----- 11. Integrations -----
 
 [[ "$TERM_PROGRAM" == "kiro" ]] && . "$(kiro --locate-shell-integration-path zsh)"
 export PATH="$HOME/.local/bin:$PATH"

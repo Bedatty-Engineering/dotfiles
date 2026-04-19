@@ -25,6 +25,11 @@ for src_file in "$DOTFILES_DIR/home"/.*; do
   link_file "$src_file" "$HOME_DIR/$filename"
 done
 
+echo "Linking config files"
+mkdir -p "$HOME_DIR/.aws" "$HOME_DIR/.ssh" "$HOME_DIR/.kube" "$HOME_DIR/.config/gh"
+link_file "$DOTFILES_DIR/config/aws/config"    "$HOME_DIR/.aws/config"
+link_file "$DOTFILES_DIR/config/ssh/config"    "$HOME_DIR/.ssh/config"
+
 echo "Linking Claude config from $DOTFILES_DIR/claude/ to $HOME_DIR/.claude/"
 mkdir -p "$HOME_DIR/.claude"
 

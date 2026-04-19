@@ -107,4 +107,20 @@ if ! is_installed claude; then
   bun install -g @anthropic-ai/claude-code
 fi
 
+# Nerd Fonts (JetBrainsMono — needed for custom prompt icons)
+FONTS_DIR="${HOME}/.local/share/fonts"
+if ! fc-list | grep -qi "JetBrainsMono"; then
+  echo "==> Installing JetBrainsMono Nerd Font"
+  mkdir -p "$FONTS_DIR"
+  curl -fsSL "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz" \
+    | tar -xJ -C "$FONTS_DIR"
+  fc-cache -fv "$FONTS_DIR" &>/dev/null
+fi
+
+# direnv (per-project environment variables)
+if ! is_installed direnv; then
+  echo "==> Installing direnv"
+  curl -fsSL https://direnv.net/install.sh | bash
+fi
+
 echo "==> All packages installed."
