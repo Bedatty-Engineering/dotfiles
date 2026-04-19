@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Bootstrap script — can be run with:
-# curl -fsSL https://raw.githubusercontent.com/bedatty/bedatty-engineernig/main/dotfiles/scripts/install.sh | bash
+# curl -fsSL https://raw.githubusercontent.com/Bedatty-Engineering/dotfiles/main/scripts/install.sh | bash
 set -euo pipefail
 
-REPO_URL="https://github.com/bedatty/bedatty-engineernig.git"
-REPO_DIR="$HOME/personal/bedatty-engineernig"
-DOTFILES_DIR="$REPO_DIR/dotfiles"
+REPO_URL="https://github.com/Bedatty-Engineering/dotfiles.git"
+REPO_DIR="$HOME/dotfiles"
+DOTFILES_DIR="$REPO_DIR"
 
 echo "==> Checking dependencies"
 for dep in git curl zsh; do
@@ -62,4 +62,4 @@ echo "  1. Add SSH keys to ~/.ssh/ and set correct permissions (chmod 600)"
 echo "  2. Configure AWS credentials: aws configure"
 echo "  3. Set up ~/.npmrc with GitHub Package Registry token for Lerian packages:"
 echo "     echo '//npm.pkg.github.com/:_authToken=YOUR_TOKEN' >> ~/.npmrc"
-echo "  4. Load your SSH key into the agent: ssh-add ~/.ssh/lerian_github_key"
+echo "  4. Load your SSH key into the agent: ssh-add ~/.ssh/company_github_key"

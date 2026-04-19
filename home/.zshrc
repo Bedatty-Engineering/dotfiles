@@ -15,7 +15,7 @@ export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
 if ! ssh-add -l &>/dev/null; then
   rm -f "$SSH_AUTH_SOCK"
   eval "$(ssh-agent -a "$SSH_AUTH_SOCK" -s)" > /dev/null
-  [[ -f ~/.ssh/lerian_github_key ]] && ssh-add ~/.ssh/lerian_github_key
+  [[ -f ~/.ssh/company_github_key ]] && ssh-add ~/.ssh/company_github_key
 fi
 
 # ----- 2. PATH -----
@@ -358,4 +358,4 @@ export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 
 # opencode
-export PATH=/home/bedatty/.opencode/bin:$PATH
+export PATH=$HOME/.opencode/bin:$PATH

@@ -2,16 +2,16 @@
 # O .zshrc faz merge automático de todos os arquivos *-config em ~/.kube/
 #
 # Clusters em uso:
-#   anacleto-k8s   → <ANACLETO_IP>:6443
-#   benedita-k8s   → <BENEDITA_IP>:6443
-#   clotilde-k8s   → <CLOTILDE_IP>:6443
-#   firmino-k8s    → <FIRMINO_IP>:6443
+#   alpha-k8s  → <ALPHA_IP>:6443
+#   beta-k8s   → <BETA_IP>:6443
+#   gamma-k8s  → <GAMMA_IP>:6443
+#   delta-k8s  → <DELTA_IP>:6443
 #
 # Namespaces por contexto:
-#   anacleto-k8s   → matcher-dev
-#   benedita-k8s   → midaz-plugins-dev
-#   clotilde-k8s   → tracer-dev
-#   firmino-k8s    → midaz-plugins-dev
+#   alpha-k8s  → app-dev
+#   beta-k8s   → platform-dev
+#   gamma-k8s  → monitoring-dev
+#   delta-k8s  → platform-dev
 
 apiVersion: v1
 kind: Config

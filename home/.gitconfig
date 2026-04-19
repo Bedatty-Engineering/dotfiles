@@ -2,12 +2,12 @@
 [core]
 	excludesfile = ~/.gitignore_global
 [user]
-	name = Lucas Bedatty
-	email = lucas.bedatty@lerian.studio
-	signingkey = /home/bedatty/.ssh/lerian_github_key
+	name = Your Name
+	email = your@email.com
+	signingkey = ~/.ssh/company_github_key
 # Please adapt and uncomment the following lines:
-#	name = Lucas Bedatty
-#	email = lucas.bedatty@lerian.studio
+#	name = Your Name
+#	email = your@email.com
 [gpg]
 	format = ssh
 [commit]

@@ -1,11 +1,11 @@
-# bedatty dotfiles
+# dotfiles
 
 DevOps/Cloud engineering workstation configuration.
 
 ## Quick Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/bedatty/bedatty-engineernig/main/dotfiles/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Bedatty-Engineering/dotfiles/main/scripts/install.sh | bash
 ```
 
 ## What's included
@@ -22,8 +22,8 @@ curl -fsSL https://raw.githubusercontent.com/bedatty/bedatty-engineernig/main/do
 ### SSH keys
 ```bash
 # Copy your private key then:
-chmod 600 ~/.ssh/lerian_github_key
-ssh-add ~/.ssh/lerian_github_key
+chmod 600 ~/.ssh/company_github_key
+ssh-add ~/.ssh/company_github_key
 ```
 
 ### AWS credentials

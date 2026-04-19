@@ -1,32 +1,31 @@
 # ~/.ssh/config — hosts sensíveis (não versionar)
 # Chaves disponíveis em ~/.ssh/:
-#   lerian_github_key / lerian_github_key.pub  — GitHub Lerian
-#   id_ed25519 / id_ed25519.pub                — chave pessoal
-#   nemoclaw_ed25519 / nemoclaw_ed25519.pub    — Nemoclaw
-#   clotilde.pem                               — cluster Clotilde (AWS)
+#   company_github_key / company_github_key.pub  — GitHub da empresa
+#   id_ed25519 / id_ed25519.pub                  — chave pessoal
+#   gamma.pem                                    — cluster Gamma (AWS)
 
 Host github.com
   HostName github.com
   User git
-  IdentityFile ~/.ssh/lerian_github_key
+  IdentityFile ~/.ssh/company_github_key
 
 # Clusters Kubernetes (acesso direto)
-# Host anacleto
-#   HostName 10.123.40.1
+# Host alpha
+#   HostName <ALPHA_IP>
 #   User ubuntu
-#   IdentityFile ~/.ssh/lerian_github_key
+#   IdentityFile ~/.ssh/company_github_key
 #
-# Host benedita
-#   HostName 10.123.40.20
+# Host beta
+#   HostName <BETA_IP>
 #   User ubuntu
-#   IdentityFile ~/.ssh/lerian_github_key
+#   IdentityFile ~/.ssh/company_github_key
 #
-# Host clotilde
-#   HostName 21.26.7.95
+# Host gamma
+#   HostName <GAMMA_IP>
 #   User ubuntu
-#   IdentityFile ~/.ssh/clotilde.pem
+#   IdentityFile ~/.ssh/gamma.pem
 #
-# Host firmino
-#   HostName 10.10.0.200
+# Host delta
+#   HostName <DELTA_IP>
 #   User ubuntu
-#   IdentityFile ~/.ssh/lerian_github_key
+#   IdentityFile ~/.ssh/company_github_key
