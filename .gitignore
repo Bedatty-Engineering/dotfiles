@@ -6,3 +6,22 @@ home/.npmrc
 home/.aws/
 home/.ssh/
 home/.gnupg/
+
+# Claude — backups e dados privados
+*.backup_*
+claude/.credentials.json
+claude/history.jsonl
+claude/projects/
+claude/sessions/
+claude/file-history/
+claude/cache/
+claude/paste-cache/
+claude/shell-snapshots/
+claude/telemetry/
+claude/plans/
+claude/tasks/
+claude/todos/
+claude/debug/
+claude/downloads/
+claude/backups/
+claude/memory/

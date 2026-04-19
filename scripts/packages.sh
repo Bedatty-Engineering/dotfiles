@@ -100,4 +100,11 @@ if ! is_installed openvpn; then
   sudo apt-get install -y -qq openvpn
 fi
 
+# Claude Code CLI
+if ! is_installed claude; then
+  echo "==> Installing Claude Code CLI"
+  npm install -g @anthropic-ai/claude-code 2>/dev/null || \
+  bun install -g @anthropic-ai/claude-code
+fi
+
 echo "==> All packages installed."

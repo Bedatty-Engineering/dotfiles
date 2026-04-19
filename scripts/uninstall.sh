@@ -32,7 +32,25 @@ for src_file in "$DOTFILES_DIR/home"/.*; do
   fi
 done
 
-# ── 2. Oh-My-Zsh ─────────────────────────────────────────────────────────────
+# ── 2. Claude config symlinks ────────────────────────────────────────────────
+echo "==> Removing Claude config symlinks"
+for src_file in "$DOTFILES_DIR/claude"/*; do
+  [ -e "$src_file" ] || continue
+  filename="$(basename "$src_file")"
+  dest="$HOME/.claude/$filename"
+
+  if [ -L "$dest" ] && [ "$(readlink "$dest")" = "$src_file" ]; then
+    rm "$dest"
+    echo "  Removed symlink: $dest"
+
+    if [ -e "${dest}.bak" ]; then
+      mv "${dest}.bak" "$dest"
+      echo "  Restored backup: ${dest}.bak -> $dest"
+    fi
+  fi
+done
+
+# ── 3. Oh-My-Zsh ─────────────────────────────────────────────────────────────
 if [ -d "$HOME/.oh-my-zsh" ] && confirm "Remove Oh-My-Zsh (~/.oh-my-zsh)?"; then
   rm -rf "$HOME/.oh-my-zsh"
   echo "  Removed ~/.oh-my-zsh"

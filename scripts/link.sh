@@ -25,4 +25,13 @@ for src_file in "$DOTFILES_DIR/home"/.*; do
   link_file "$src_file" "$HOME_DIR/$filename"
 done
 
+echo "Linking Claude config from $DOTFILES_DIR/claude/ to $HOME_DIR/.claude/"
+mkdir -p "$HOME_DIR/.claude"
+
+for src_file in "$DOTFILES_DIR/claude"/*; do
+  [ -e "$src_file" ] || continue
+  filename="$(basename "$src_file")"
+  link_file "$src_file" "$HOME_DIR/.claude/$filename"
+done
+
 echo "Done."
