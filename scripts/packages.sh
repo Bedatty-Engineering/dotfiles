@@ -37,14 +37,11 @@ if [ ! -d "$HOME/.fzf" ]; then
   "$HOME/.fzf/install" --all --no-bash --no-fish
 fi
 
-# nvm + Node LTS
-if [ ! -d "$HOME/.nvm" ]; then
-  echo "==> Installing nvm"
-  curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-  export NVM_DIR="$HOME/.nvm"
-  # shellcheck disable=SC1091
-  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-  nvm install --lts
+# Bun (runtime + package manager, replaces nvm/node/npm)
+if ! is_installed bun; then
+  echo "==> Installing Bun"
+  curl -fsSL https://bun.sh/install | bash
+  export PATH="$HOME/.bun/bin:$PATH"
 fi
 
 # kubectl
@@ -101,12 +98,6 @@ fi
 if ! is_installed openvpn; then
   echo "==> Installing OpenVPN"
   sudo apt-get install -y -qq openvpn
-fi
-
-# Bun
-if ! is_installed bun; then
-  echo "==> Installing Bun"
-  curl -fsSL https://bun.sh/install | bash
 fi
 
 echo "==> All packages installed."
