@@ -80,4 +80,33 @@ if ! is_installed argocd; then
   sudo install -m 0755 /tmp/argocd /usr/local/bin/argocd
 fi
 
+# Terraform
+if ! is_installed terraform; then
+  echo "==> Installing Terraform"
+  wget -qO /tmp/terraform.zip "https://releases.hashicorp.com/terraform/$(curl -fsSL https://checkpoint-api.hashicorp.com/v1/check/terraform | jq -r '.current_version')/terraform_$(curl -fsSL https://checkpoint-api.hashicorp.com/v1/check/terraform | jq -r '.current_version')_linux_amd64.zip"
+  unzip -q /tmp/terraform.zip -d /tmp/terraform
+  sudo install -m 0755 /tmp/terraform/terraform /usr/local/bin/terraform
+  rm -rf /tmp/terraform /tmp/terraform.zip
+fi
+
+# GitHub CLI
+if ! is_installed gh; then
+  echo "==> Installing GitHub CLI"
+  curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list
+  sudo apt-get update -qq && sudo apt-get install -y -qq gh
+fi
+
+# OpenVPN
+if ! is_installed openvpn; then
+  echo "==> Installing OpenVPN"
+  sudo apt-get install -y -qq openvpn
+fi
+
+# Bun
+if ! is_installed bun; then
+  echo "==> Installing Bun"
+  curl -fsSL https://bun.sh/install | bash
+fi
+
 echo "==> All packages installed."
