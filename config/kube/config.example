@@ -1,23 +1,34 @@
-# ~/.kube/config — exemplo de estrutura
-# NÃO versionar o config real (contém certificados e tokens)
-# Coloque configs de clusters em ~/.kube/<cluster>-config
-# O .zshrc já faz merge automático de todos os arquivos *-config
+# ~/.kube/<cluster>-config — NÃO versionar (contém certificados e tokens)
+# O .zshrc faz merge automático de todos os arquivos *-config em ~/.kube/
+#
+# Clusters em uso:
+#   anacleto-k8s   → 10.123.40.1:6443
+#   benedita-k8s   → 10.123.40.20:6443
+#   clotilde-k8s   → 21.26.7.95:6443
+#   firmino-k8s    → 10.10.0.200:6443
+#
+# Namespaces por contexto:
+#   anacleto-k8s   → matcher-dev
+#   benedita-k8s   → midaz-plugins-dev
+#   clotilde-k8s   → tracer-dev
+#   firmino-k8s    → midaz-plugins-dev
 
 apiVersion: v1
 kind: Config
+current-context: ""
 clusters:
-  - name: lerian-dev
+  - name: <cluster>-k8s
     cluster:
-      server: https://<CLUSTER_ENDPOINT>
-      certificate-authority-data: <BASE64_CA_CERT>
+      server: https://<IP>:6443
+      certificate-authority-data: <BASE64_CA>
 contexts:
-  - name: lerian-dev
+  - name: <cluster>-k8s
     context:
-      cluster: lerian-dev
-      user: bedatty
-      namespace: default
+      cluster: <cluster>-k8s
+      user: <cluster>-k8s
+      namespace: <namespace>
 users:
-  - name: bedatty
+  - name: <cluster>-k8s
     user:
-      token: <SERVICE_ACCOUNT_TOKEN>
-current-context: lerian-dev
+      client-certificate-data: <BASE64_CERT>
+      client-key-data: <BASE64_KEY>
