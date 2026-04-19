@@ -123,4 +123,22 @@ if ! is_installed direnv; then
   curl -fsSL https://direnv.net/install.sh | bash
 fi
 
+# VS Code
+if ! is_installed code; then
+  echo "==> Installing VS Code"
+  curl -fsSL "https://packages.microsoft.com/keys/microsoft.asc" | sudo gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/code stable main" \
+    | sudo tee /etc/apt/sources.list.d/vscode.list
+  sudo apt-get update -qq && sudo apt-get install -y -qq code
+fi
+
+# Cursor
+if ! is_installed cursor; then
+  echo "==> Installing Cursor"
+  CURSOR_URL="$(curl -fsSL "https://www.cursor.com/api/download?platform=linux-x64&releaseTrack=stable" | grep -o '"url":"[^"]*"' | head -1 | cut -d'"' -f4)"
+  curl -fsSLo /tmp/cursor.AppImage "$CURSOR_URL"
+  chmod +x /tmp/cursor.AppImage
+  sudo mv /tmp/cursor.AppImage /usr/local/bin/cursor
+fi
+
 echo "==> All packages installed."
