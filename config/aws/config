@@ -3,13 +3,13 @@ region = us-east-1
 
 ### Lerian Studio
 [sso-session lerian-sso]
-sso_start_url = https://leriand.awsapps.com/start#
+sso_start_url = https://<SSO_SUBDOMAIN>.awsapps.com/start#
 sso_region = us-east-1
 sso_registration_scopes = sso:account:access
 
 [profile lerian]
 sso_session = lerian-sso
-sso_account_id = 239025757440
+sso_account_id = <ACCOUNT_ID_LERIAN>
 sso_role_name = AWSAdministratorAccess
 region = us-east-2
 output = json
@@ -17,7 +17,7 @@ cli_pager =
 
 [profile lerian-devops]
 sso_session = lerian-sso
-sso_account_id = 905418424496
+sso_account_id = <ACCOUNT_ID_DEVOPS>
 sso_role_name = AWSDevopsAdministratorAccess
 region = us-east-2
 output = json
@@ -25,7 +25,7 @@ cli_pager =
 
 [profile lerian-network]
 sso_session = lerian-sso
-sso_account_id = 975049942889
+sso_account_id = <ACCOUNT_ID_NETWORK>
 sso_role_name = AWSDevopsAdministratorAccess
 region = us-east-2
 output = json
@@ -33,7 +33,7 @@ cli_pager =
 
 [profile lerian-development]
 sso_session = lerian-sso
-sso_account_id = 891377226668
+sso_account_id = <ACCOUNT_ID_DEVELOPMENT>
 sso_role_name = AWSDevopsAdministratorAccess
 region = us-east-2
 output = json
@@ -41,7 +41,7 @@ cli_pager =
 
 [profile lerian-production]
 sso_session = lerian-sso
-sso_account_id = 975050094172
+sso_account_id = <ACCOUNT_ID_PRODUCTION>
 sso_role_name = AWSDevopsAdministratorAccess
 region = us-east-2
 output = json
@@ -49,7 +49,7 @@ cli_pager =
 
 [profile lerian-sandbox]
 sso_session = lerian-sso
-sso_account_id = 524121347244
+sso_account_id = <ACCOUNT_ID_SANDBOX>
 sso_role_name = AWSDevopsAdministratorAccess
 region = us-east-2
 output = json

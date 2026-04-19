@@ -10,6 +10,7 @@ home/.gnupg/
 # Claude — backups e dados privados
 *.backup_*
 claude/.credentials.json
+claude/settings.local.json
 claude/history.jsonl
 claude/projects/
 claude/sessions/

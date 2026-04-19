@@ -2,10 +2,10 @@
 # O .zshrc faz merge automático de todos os arquivos *-config em ~/.kube/
 #
 # Clusters em uso:
-#   anacleto-k8s   → 10.123.40.1:6443
-#   benedita-k8s   → 10.123.40.20:6443
-#   clotilde-k8s   → 21.26.7.95:6443
-#   firmino-k8s    → 10.10.0.200:6443
+#   anacleto-k8s   → <ANACLETO_IP>:6443
+#   benedita-k8s   → <BENEDITA_IP>:6443
+#   clotilde-k8s   → <CLOTILDE_IP>:6443
+#   firmino-k8s    → <FIRMINO_IP>:6443
 #
 # Namespaces por contexto:
 #   anacleto-k8s   → matcher-dev
@@ -19,7 +19,7 @@ current-context: ""
 clusters:
   - name: <cluster>-k8s
     cluster:
-      server: https://<IP>:6443
+      server: https://<CLUSTER_IP>:6443
       certificate-authority-data: <BASE64_CA>
 contexts:
   - name: <cluster>-k8s
