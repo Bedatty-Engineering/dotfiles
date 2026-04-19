@@ -1,0 +1,8 @@
+*.pem
+*.key
+*credentials*
+*token*
+home/.npmrc
+home/.aws/
+home/.ssh/
+home/.gnupg/

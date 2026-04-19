@@ -1,0 +1,16 @@
+# This is Git's per-user configuration file.
+[user]
+	name = Lucas Bedatty
+	email = lucas.bedatty@lerian.studio
+	signingkey = /home/bedatty/.ssh/lerian_github_key
+# Please adapt and uncomment the following lines:
+#	name = Lucas Bedatty
+#	email = lucas.bedatty@lerian.studio
+[gpg]
+	format = ssh
+[commit]
+	gpgsign = true
+[tag]
+	gpgsign = true
+[url "git@github.com:"]
+	insteadOf = https://github.com/
