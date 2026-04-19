@@ -50,15 +50,8 @@ if ask "  Set zsh as default shell?"; then
 fi
 
 if ask "  Install Ring (LerianStudio Claude skills and agents)?"; then
-  RING_DIR="$HOME/.claude"
-  echo "  Cloning Ring into $RING_DIR..."
-  if [ -d "$RING_DIR/.git" ]; then
-    git -C "$RING_DIR" pull --ff-only
-    echo "  Ring updated."
-  else
-    git clone https://github.com/LerianStudio/ring.git "$RING_DIR"
-    echo "  Ring installed."
-  fi
+  echo "  Running Ring installer..."
+  curl -fsSL https://raw.githubusercontent.com/lerianstudio/ring/main/install-ring.sh | bash
 fi
 
 echo ""
