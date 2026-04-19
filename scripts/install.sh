@@ -24,15 +24,29 @@ else
   git clone "$REPO_URL" "$REPO_DIR"
 fi
 
-echo "==> Installing packages"
-bash "$DOTFILES_DIR/scripts/packages.sh"
+ask() {
+  local msg="$1"
+  read -r -p "$msg [Y/n] " answer
+  [[ "${answer,,}" != "n" ]]
+}
 
-echo "==> Linking dotfiles"
-bash "$DOTFILES_DIR/scripts/link.sh"
+echo ""
+echo "==> What would you like to do?"
 
-echo "==> Setting zsh as default shell"
-if [ "$SHELL" != "$(command -v zsh)" ]; then
-  chsh -s "$(command -v zsh)"
+if ask "  Install packages (oh-my-zsh, fzf, kubectl, nvm, aws, argocd)?"; then
+  bash "$DOTFILES_DIR/scripts/packages.sh"
+fi
+
+if ask "  Create dotfile symlinks in \$HOME?"; then
+  bash "$DOTFILES_DIR/scripts/link.sh"
+fi
+
+if ask "  Set zsh as default shell?"; then
+  if [ "$SHELL" != "$(command -v zsh)" ]; then
+    chsh -s "$(command -v zsh)"
+  else
+    echo "  zsh is already the default shell."
+  fi
 fi
 
 echo ""
