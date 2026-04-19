@@ -1,0 +1,19 @@
+# ~/.ssh/config — exemplo com hosts sensíveis
+# Adicione entradas aqui e copie para ~/.ssh/config
+# As chaves privadas ficam em ~/.ssh/ e NUNCA entram no repo
+
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/lerian_github_key
+
+# Exemplo: servidor interno via jump host
+# Host bastion.lerian
+#   HostName <IP_DO_BASTION>
+#   User ubuntu
+#   IdentityFile ~/.ssh/lerian_key
+#
+# Host *.internal
+#   ProxyJump bastion.lerian
+#   User ubuntu
+#   IdentityFile ~/.ssh/lerian_key

@@ -1,0 +1,23 @@
+# ~/.kube/config — exemplo de estrutura
+# NÃO versionar o config real (contém certificados e tokens)
+# Coloque configs de clusters em ~/.kube/<cluster>-config
+# O .zshrc já faz merge automático de todos os arquivos *-config
+
+apiVersion: v1
+kind: Config
+clusters:
+  - name: lerian-dev
+    cluster:
+      server: https://<CLUSTER_ENDPOINT>
+      certificate-authority-data: <BASE64_CA_CERT>
+contexts:
+  - name: lerian-dev
+    context:
+      cluster: lerian-dev
+      user: bedatty
+      namespace: default
+users:
+  - name: bedatty
+    user:
+      token: <SERVICE_ACCOUNT_TOKEN>
+current-context: lerian-dev
