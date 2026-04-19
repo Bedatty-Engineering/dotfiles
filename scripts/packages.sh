@@ -52,6 +52,14 @@ if ! is_installed kubectl; then
   sudo install -o root -g root -m 0755 /tmp/kubectl /usr/local/bin/kubectl
 fi
 
+# minikube
+if ! is_installed minikube; then
+  echo "==> Installing minikube"
+  curl -fsSLo /tmp/minikube "https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64"
+  sudo install -m 0755 /tmp/minikube /usr/local/bin/minikube
+  rm /tmp/minikube
+fi
+
 # kubectx + kubens
 if ! is_installed kubectx; then
   echo "==> Installing kubectx/kubens"

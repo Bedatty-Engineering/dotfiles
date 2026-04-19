@@ -1,0 +1,23 @@
+# ~/.kube/config — arquivo padrão do kubectl
+# Gerado automaticamente por ferramentas como minikube, kind, etc.
+# NÃO versionar (contém certificados e tokens)
+
+apiVersion: v1
+kind: Config
+current-context: minikube
+clusters:
+  - name: minikube
+    cluster:
+      server: https://127.0.0.1:8443
+      certificate-authority: ~/.minikube/ca.crt
+contexts:
+  - name: minikube
+    context:
+      cluster: minikube
+      user: minikube
+      namespace: default
+users:
+  - name: minikube
+    user:
+      client-certificate: ~/.minikube/profiles/minikube/client.crt
+      client-key: ~/.minikube/profiles/minikube/client.key
