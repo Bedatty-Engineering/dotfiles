@@ -5,7 +5,7 @@ is_installed() { command -v "$1" &>/dev/null; }
 
 echo "==> Installing system packages"
 sudo apt-get update -qq
-sudo apt-get install -y -qq git curl wget zsh tmux unzip build-essential
+sudo apt-get install -y -qq git curl wget zsh tmux unzip build-essential jq
 
 # Oh-My-Zsh
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
