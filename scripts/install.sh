@@ -61,7 +61,11 @@ fi
 
 if ask "  Install Ring (LerianStudio Claude skills and agents)?"; then
   echo "  Running Ring installer..."
-  curl -fsSL https://raw.githubusercontent.com/lerianstudio/ring/main/install-ring.sh | bash
+  # Override url.insteadOf rewrite so git clones via HTTPS without SSH keys
+  GIT_CONFIG_COUNT=1 \
+  GIT_CONFIG_KEY_0="url.https://github.com/.insteadOf" \
+  GIT_CONFIG_VALUE_0="" \
+    bash -c "$(curl -fsSL https://raw.githubusercontent.com/lerianstudio/ring/main/install-ring.sh)"
 fi
 
 echo ""
