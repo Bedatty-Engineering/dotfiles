@@ -16,15 +16,14 @@ for dep in git curl zsh; do
 done
 
 echo "==> Cloning repository"
-# Override any global url.insteadOf rewrite so we can clone via HTTPS
-# without requiring SSH keys to be set up yet
-GIT_HTTPS="git -c url.https://github.com/.insteadOf="
+# Bypass the user's global gitconfig so any url.insteadOf rewrite
+# does not force SSH before keys are set up
 if [ -d "$REPO_DIR/.git" ]; then
   echo "  Repo already exists, pulling latest"
-  $GIT_HTTPS -C "$REPO_DIR" pull --ff-only
+  GIT_CONFIG_GLOBAL=/dev/null git -C "$REPO_DIR" pull --ff-only
 else
   mkdir -p "$(dirname "$REPO_DIR")"
-  $GIT_HTTPS clone "$REPO_URL" "$REPO_DIR"
+  GIT_CONFIG_GLOBAL=/dev/null git clone "$REPO_URL" "$REPO_DIR"
 fi
 
 ask() {
@@ -61,10 +60,8 @@ fi
 
 if ask "  Install Ring (LerianStudio Claude skills and agents)?"; then
   echo "  Running Ring installer..."
-  # Override url.insteadOf rewrite so git clones via HTTPS without SSH keys
-  GIT_CONFIG_COUNT=1 \
-  GIT_CONFIG_KEY_0="url.https://github.com/.insteadOf" \
-  GIT_CONFIG_VALUE_0="" \
+  # Bypass global gitconfig so url.insteadOf rewrite doesn't force SSH
+  GIT_CONFIG_GLOBAL=/dev/null \
     bash -c "$(curl -fsSL https://raw.githubusercontent.com/lerianstudio/ring/main/install-ring.sh)"
 fi
 
