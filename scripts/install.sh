@@ -16,12 +16,15 @@ for dep in git curl zsh; do
 done
 
 echo "==> Cloning repository"
+# Override any global url.insteadOf rewrite so we can clone via HTTPS
+# without requiring SSH keys to be set up yet
+GIT_HTTPS="git -c url.https://github.com/.insteadOf="
 if [ -d "$REPO_DIR/.git" ]; then
   echo "  Repo already exists, pulling latest"
-  git -C "$REPO_DIR" pull --ff-only
+  $GIT_HTTPS -C "$REPO_DIR" pull --ff-only
 else
   mkdir -p "$(dirname "$REPO_DIR")"
-  git clone "$REPO_URL" "$REPO_DIR"
+  $GIT_HTTPS clone "$REPO_URL" "$REPO_DIR"
 fi
 
 ask() {
