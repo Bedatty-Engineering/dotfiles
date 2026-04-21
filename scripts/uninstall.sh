@@ -1,127 +1,199 @@
 #!/usr/bin/env bash
-set -euo pipefail
+# Reverts everything done by install.sh and leaves the system as it was.
+set -uo pipefail
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_DIR="$(cd "$DOTFILES_DIR/.." && pwd)"
+
+# ── Colors ────────────────────────────────────────────────────────────────────
+if [ -t 1 ]; then
+  C_CYAN=$'\033[36m'; C_GREEN=$'\033[32m'; C_YELLOW=$'\033[33m'
+  C_RED=$'\033[31m'; C_DIM=$'\033[2m'; C_BOLD=$'\033[1m'; C_RESET=$'\033[0m'
+else
+  C_CYAN=""; C_GREEN=""; C_YELLOW=""; C_RED=""; C_DIM=""; C_BOLD=""; C_RESET=""
+fi
+
+declare -A STEPS
+declare -a STEP_ORDER
+
+record() {
+  STEPS["$1"]="${2}|${3:-}"
+  STEP_ORDER+=("$1")
+}
+
+header() {
+  echo ""
+  echo "${C_BOLD}${C_CYAN}==> $1${C_RESET}"
+}
 
 confirm() {
-  local msg="$1"
-  read -r -p "$msg [y/N] " answer
+  local answer
+  if [ -t 0 ]; then
+    read -r -p "  $1 [y/N] " answer
+  else
+    read -r -p "  $1 [y/N] " answer </dev/tty
+  fi
   [[ "${answer,,}" == "y" ]]
 }
 
-echo "==> Dotfiles Uninstaller"
-echo "    This will remove symlinks, installed tools, and optionally the repo itself."
-echo ""
-
-# ── 1. Remove symlinks ────────────────────────────────────────────────────────
-echo "==> Removing dotfile symlinks"
-for src_file in "$DOTFILES_DIR/home"/.*; do
-  [ -f "$src_file" ] || continue
-  filename="$(basename "$src_file")"
-  dest="$HOME/$filename"
-
-  if [ -L "$dest" ] && [ "$(readlink "$dest")" = "$src_file" ]; then
-    rm "$dest"
-    echo "  Removed symlink: $dest"
-
-    # Restore backup if it exists
-    if [ -f "${dest}.bak" ]; then
-      mv "${dest}.bak" "$dest"
-      echo "  Restored backup: ${dest}.bak -> $dest"
-    fi
+# Try a command; record ok/fail in one go
+try_remove() {
+  local name="$1"; shift
+  if "$@" &>/dev/null; then
+    record "$name" "ok" "removed"
+  else
+    record "$name" "fail" "check manually"
   fi
+}
+
+# ── 1. Symlinks ───────────────────────────────────────────────────────────────
+header "Removing dotfile symlinks"
+removed_links=0
+restored_backups=0
+
+unlink_if_owned() {
+  local src="$1" dest="$2"
+  [ -L "$dest" ] || return 0
+  [ "$(readlink "$dest")" = "$src" ] || return 0
+  rm "$dest"
+  removed_links=$((removed_links+1))
+  if [ -e "${dest}.bak" ]; then
+    mv "${dest}.bak" "$dest"
+    restored_backups=$((restored_backups+1))
+  fi
+}
+
+for src in "$DOTFILES_DIR/home"/.*; do
+  [ -f "$src" ] || continue
+  unlink_if_owned "$src" "$HOME/$(basename "$src")"
+done
+unlink_if_owned "$DOTFILES_DIR/config/aws/config" "$HOME/.aws/config"
+unlink_if_owned "$DOTFILES_DIR/config/ssh/config" "$HOME/.ssh/config"
+for src in "$DOTFILES_DIR/claude"/*; do
+  [ -e "$src" ] || continue
+  unlink_if_owned "$src" "$HOME/.claude/$(basename "$src")"
 done
 
-# ── 2. Claude config symlinks ────────────────────────────────────────────────
-echo "==> Removing Claude config symlinks"
-for src_file in "$DOTFILES_DIR/claude"/*; do
-  [ -e "$src_file" ] || continue
-  filename="$(basename "$src_file")"
-  dest="$HOME/.claude/$filename"
+record "Symlinks" "ok" "$removed_links removed, $restored_backups backups restored"
 
-  if [ -L "$dest" ] && [ "$(readlink "$dest")" = "$src_file" ]; then
-    rm "$dest"
-    echo "  Removed symlink: $dest"
-
-    if [ -e "${dest}.bak" ]; then
-      mv "${dest}.bak" "$dest"
-      echo "  Restored backup: ${dest}.bak -> $dest"
-    fi
-  fi
-done
-
-# ── 3. Oh-My-Zsh ─────────────────────────────────────────────────────────────
-if [ -d "$HOME/.oh-my-zsh" ] && confirm "Remove Oh-My-Zsh (~/.oh-my-zsh)?"; then
+# ── 2. Shell tools ────────────────────────────────────────────────────────────
+header "Shell environment"
+if [ -d "$HOME/.oh-my-zsh" ] && confirm "Remove Oh-My-Zsh?"; then
   rm -rf "$HOME/.oh-my-zsh"
-  echo "  Removed ~/.oh-my-zsh"
+  record "Oh-My-Zsh" "ok" "~/.oh-my-zsh"
+else
+  record "Oh-My-Zsh" "skip" ""
 fi
 
-# ── 3. zsh plugins ───────────────────────────────────────────────────────────
-ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
-for plugin in zsh-autosuggestions zsh-syntax-highlighting; do
-  plugin_dir="$ZSH_CUSTOM/plugins/$plugin"
-  if [ -d "$plugin_dir" ] && confirm "Remove zsh plugin: $plugin?"; then
-    rm -rf "$plugin_dir"
-    echo "  Removed $plugin_dir"
+[ -d "$HOME/.fzf" ] && confirm "Remove fzf?" && { "$HOME/.fzf/uninstall" &>/dev/null || true; rm -rf "$HOME/.fzf"; record "fzf" "ok" ""; } || record "fzf" "skip" ""
+
+[ -d "$HOME/.bun" ] && confirm "Remove Bun?" && { rm -rf "$HOME/.bun"; record "Bun" "ok" ""; } || record "Bun" "skip" ""
+
+[ -d "$HOME/.nvm" ] && confirm "Remove nvm?" && { rm -rf "$HOME/.nvm"; record "nvm" "ok" ""; } || record "nvm" "skip" ""
+
+[ -d "$HOME/.tmux/plugins" ] && confirm "Remove tmux plugins (TPM)?" && { rm -rf "$HOME/.tmux"; record "TPM" "ok" ""; } || record "TPM" "skip" ""
+
+# ── 3. Binaries in /usr/local/bin ─────────────────────────────────────────────
+header "Kubernetes & cloud tools"
+for bin in kubectl kubectx kubens minikube helm k9s stern kustomize argocd terraform session-manager-plugin; do
+  if command -v "$bin" &>/dev/null && confirm "Remove $bin?"; then
+    sudo rm -f "/usr/local/bin/$bin" "/usr/bin/$bin" 2>/dev/null
+    [ "$bin" = "kubectx" ] && sudo rm -rf /opt/kubectx
+    record "$bin" "ok" ""
+  else
+    record "$bin" "skip" ""
   fi
 done
 
-# ── 4. fzf ───────────────────────────────────────────────────────────────────
-if [ -d "$HOME/.fzf" ] && confirm "Remove fzf (~/.fzf)?"; then
-  "$HOME/.fzf/uninstall" 2>/dev/null || true
-  rm -rf "$HOME/.fzf"
-  echo "  Removed ~/.fzf"
-fi
-
-# ── 5. nvm + Node ────────────────────────────────────────────────────────────
-if [ -d "$HOME/.nvm" ] && confirm "Remove nvm + Node.js (~/.nvm)?"; then
-  rm -rf "$HOME/.nvm"
-  echo "  Removed ~/.nvm"
-fi
-
-# ── 6. kubectl ───────────────────────────────────────────────────────────────
-if command -v kubectl &>/dev/null && confirm "Remove kubectl (/usr/local/bin/kubectl)?"; then
-  sudo rm -f /usr/local/bin/kubectl
-  echo "  Removed kubectl"
-fi
-
-# ── 7. kubectx + kubens ──────────────────────────────────────────────────────
-if [ -d /opt/kubectx ] && confirm "Remove kubectx/kubens (/opt/kubectx)?"; then
-  sudo rm -f /usr/local/bin/kubectx /usr/local/bin/kubens
-  sudo rm -rf /opt/kubectx
-  echo "  Removed kubectx/kubens"
-fi
-
-# ── 8. AWS CLI v2 ────────────────────────────────────────────────────────────
 if command -v aws &>/dev/null && confirm "Remove AWS CLI v2?"; then
-  sudo /usr/local/aws-cli/v2/current/bin/aws_completer 2>/dev/null || true
   sudo rm -rf /usr/local/aws-cli
   sudo rm -f /usr/local/bin/aws /usr/local/bin/aws_completer
-  echo "  Removed AWS CLI"
+  record "AWS CLI" "ok" ""
+else
+  record "AWS CLI" "skip" ""
 fi
 
-# ── 9. ArgoCD CLI ────────────────────────────────────────────────────────────
-if command -v argocd &>/dev/null && confirm "Remove ArgoCD CLI (/usr/local/bin/argocd)?"; then
-  sudo rm -f /usr/local/bin/argocd
-  echo "  Removed argocd"
+# ── 4. Terminal productivity ──────────────────────────────────────────────────
+header "Terminal productivity tools"
+for pkg in zoxide atuin bat eza delta direnv jq gh openvpn docker docker-compose-plugin python3-pip pipx; do
+  if command -v "${pkg%-*}" &>/dev/null && confirm "Remove $pkg?"; then
+    sudo apt-get remove -y -qq "$pkg" &>/dev/null || rm -rf "$HOME/.$pkg" 2>/dev/null
+    record "$pkg" "ok" ""
+  else
+    record "$pkg" "skip" ""
+  fi
+done
+
+# ── 5. Editors ────────────────────────────────────────────────────────────────
+header "Editors"
+command -v code &>/dev/null && confirm "Remove VS Code?" && { sudo apt-get remove -y -qq code &>/dev/null; record "VS Code" "ok" ""; } || record "VS Code" "skip" ""
+command -v cursor &>/dev/null && confirm "Remove Cursor?" && { sudo rm -f /usr/local/bin/cursor; record "Cursor" "ok" ""; } || record "Cursor" "skip" ""
+
+# ── 6. Nerd Fonts ─────────────────────────────────────────────────────────────
+if fc-list 2>/dev/null | grep -qi "JetBrainsMono" && confirm "Remove Nerd Fonts?"; then
+  rm -f "$HOME/.local/share/fonts"/JetBrainsMono*.ttf 2>/dev/null
+  fc-cache -f &>/dev/null
+  record "Nerd Fonts" "ok" "JetBrainsMono"
+else
+  record "Nerd Fonts" "skip" ""
 fi
 
-# ── 10. Restore default shell ────────────────────────────────────────────────
+# ── 7. Ring (Claude marketplace) ──────────────────────────────────────────────
+if command -v claude &>/dev/null && confirm "Uninstall Ring marketplace plugins?"; then
+  claude plugin marketplace remove lerianstudio/ring &>/dev/null || true
+  rm -rf "$HOME/.claude/plugins/marketplaces/lerianstudio-ring" 2>/dev/null
+  record "Ring" "ok" "marketplace removed"
+else
+  record "Ring" "skip" ""
+fi
+
+if command -v claude &>/dev/null && confirm "Uninstall Claude Code CLI?"; then
+  npm uninstall -g @anthropic-ai/claude-code &>/dev/null || \
+  bun uninstall -g @anthropic-ai/claude-code &>/dev/null || true
+  record "Claude CLI" "ok" ""
+else
+  record "Claude CLI" "skip" ""
+fi
+
+# ── 8. Default shell back to bash ─────────────────────────────────────────────
 current_shell="$(getent passwd "$USER" | cut -d: -f7)"
 if [ "$current_shell" = "$(command -v zsh)" ] && confirm "Restore default shell to bash?"; then
-  chsh -s "$(command -v bash)"
-  echo "  Default shell restored to bash"
+  sudo chsh -s "$(command -v bash)" "$USER" && record "Default shell" "ok" "reset to bash" || record "Default shell" "fail" "run manually"
+else
+  record "Default shell" "skip" ""
 fi
 
-# ── 11. Remove repo ──────────────────────────────────────────────────────────
-REPO_DIR="$(cd "$DOTFILES_DIR/../.." && pwd)"
-if confirm "Remove the dotfiles repo itself ($REPO_DIR)?"; then
+# ── 9. Repo itself ────────────────────────────────────────────────────────────
+if confirm "Remove the dotfiles repo ($REPO_DIR)?"; then
+  # Can't delete cwd safely if script runs from inside
+  cd /tmp
   rm -rf "$REPO_DIR"
-  echo "  Removed $REPO_DIR"
-  echo ""
-  echo "Done. Uninstall complete — restart your shell."
-  exit 0
+  record "Repo" "ok" "$REPO_DIR deleted"
+else
+  record "Repo" "skip" "$REPO_DIR kept"
 fi
+
+# ── 10. Summary ───────────────────────────────────────────────────────────────
+echo ""
+echo "${C_BOLD}${C_CYAN}╔══════════════════════════════════════════════════════════════════╗${C_RESET}"
+echo "${C_BOLD}${C_CYAN}║                        Uninstall Summary                          ║${C_RESET}"
+echo "${C_BOLD}${C_CYAN}╚══════════════════════════════════════════════════════════════════╝${C_RESET}"
+echo ""
+printf "  %-22s %-8s %s\n" "STEP" "STATUS" "DETAIL"
+printf "  %-22s %-8s %s\n" "────" "──────" "──────"
+for name in "${STEP_ORDER[@]}"; do
+  IFS='|' read -r status detail <<< "${STEPS[$name]}"
+  case "$status" in
+    ok)   icon="${C_GREEN}✓ ok${C_RESET}   " ;;
+    skip) icon="${C_DIM}○ skip${C_RESET} " ;;
+    fail) icon="${C_RED}✗ fail${C_RESET} " ;;
+  esac
+  printf "  %-22s %b %s\n" "$name" "$icon" "${C_DIM}${detail}${C_RESET}"
+done
 
 echo ""
-echo "Done. Uninstall complete — restart your shell."
+echo "${C_BOLD}${C_YELLOW}Notes:${C_RESET}"
+echo "  • APT packages were removed but ${C_CYAN}sudo apt-get autoremove${C_RESET} may clean leftover deps"
+echo "  • Data in ~/.aws, ~/.kube, ~/.ssh (keys, configs) was NOT touched"
+echo "  • Log out and back in to return to the previous shell"
+echo ""
