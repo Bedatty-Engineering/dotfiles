@@ -26,7 +26,12 @@ fi
 
 ask() {
   local msg="$1"
-  read -r -p "$msg [Y/n] " answer
+  local answer
+  if [ -t 0 ]; then
+    read -r -p "$msg [Y/n] " answer
+  else
+    read -r -p "$msg [Y/n] " answer </dev/tty
+  fi
   [[ "${answer,,}" != "n" ]]
 }
 
