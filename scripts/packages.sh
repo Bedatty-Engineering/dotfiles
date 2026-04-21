@@ -246,10 +246,20 @@ fi
 # Cursor
 if ! is_installed cursor; then
   echo "==> Installing Cursor"
-  CURSOR_URL="$(curl -fsSL "https://www.cursor.com/api/download?platform=linux-x64&releaseTrack=stable" | grep -o '"url":"[^"]*"' | head -1 | cut -d'"' -f4)"
-  curl -fsSLo /tmp/cursor.AppImage "$CURSOR_URL"
-  chmod +x /tmp/cursor.AppImage
-  sudo mv /tmp/cursor.AppImage /usr/local/bin/cursor
+  (
+    set +e
+    CURSOR_URL="$(curl -fsSL "https://www.cursor.com/api/download?platform=linux-x64&releaseTrack=stable" 2>/dev/null \
+      | jq -r '.downloadUrl // .url // empty')"
+    if [ -z "$CURSOR_URL" ]; then
+      echo "  WARN: could not resolve Cursor download URL, skipping"
+    else
+      curl -fsSLo /tmp/cursor.AppImage "$CURSOR_URL" && \
+        chmod +x /tmp/cursor.AppImage && \
+        sudo mv /tmp/cursor.AppImage /usr/local/bin/cursor && \
+        echo "  Cursor installed" || \
+        echo "  WARN: Cursor install failed, skipping"
+    fi
+  )
 fi
 
 echo "==> All packages installed."
