@@ -48,7 +48,9 @@ fi
 
 if ask "  Set zsh as default shell?"; then
   if [ "$SHELL" != "$(command -v zsh)" ]; then
-    chsh -s "$(command -v zsh)"
+    sudo chsh -s "$(command -v zsh)" "$USER" && \
+      echo "  Default shell set to zsh. Log out and back in to apply." || \
+      echo "  WARN: chsh failed. Run manually: sudo chsh -s \$(command -v zsh) \$USER"
   else
     echo "  zsh is already the default shell."
   fi
