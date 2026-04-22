@@ -1,4 +1,7 @@
-# dotfiles
+<table><tr>
+<td><img src="https://github.com/Bedatty-Engineering.png" alt="Bedatty Engineering" width="80" /></td>
+<td><h1>dotfiles</h1></td>
+</tr></table>
 
 DevOps/Cloud engineering workstation. One-command setup from a fresh Ubuntu/WSL install to a fully configured environment with shell, cloud tools, Kubernetes stack, and editor configs.
 
