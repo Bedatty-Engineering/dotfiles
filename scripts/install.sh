@@ -301,9 +301,18 @@ echo "  Or just use locally without account: ${C_CYAN}Ctrl+R${C_RESET} to search
 
 echo ""
 echo "${C_BOLD}${C_YELLOW}▸ VS Code / Cursor${C_RESET}"
-echo "  Sign in to sync settings and extensions:"
-echo "      ${C_CYAN}code${C_RESET}      ${C_DIM}# GitHub/Microsoft sign-in${C_RESET}"
-echo "      ${C_CYAN}cursor${C_RESET}    ${C_DIM}# Cursor account${C_RESET}"
+if grep -qi microsoft /proc/version 2>/dev/null; then
+  echo "  ${C_YELLOW}WSL detected.${C_RESET} The Linux builds were installed for completeness, but you should"
+  echo "  install the Windows builds and use them via the ${C_CYAN}WSL${C_RESET} extension:"
+  echo "      1. Install VS Code on Windows:  ${C_CYAN}https://code.visualstudio.com/download${C_RESET}"
+  echo "      2. Install Cursor on Windows:   ${C_CYAN}https://cursor.com/download${C_RESET}"
+  echo "      3. In VS Code Windows: install the ${C_CYAN}\"WSL\"${C_RESET} extension (ms-vscode-remote.remote-wsl)"
+  echo "      4. From WSL, run ${C_CYAN}code .${C_RESET} or ${C_CYAN}cursor .${C_RESET} — aliases route to the Windows binaries"
+else
+  echo "  Sign in to sync settings and extensions:"
+  echo "      ${C_CYAN}code${C_RESET}      ${C_DIM}# GitHub/Microsoft sign-in${C_RESET}"
+  echo "      ${C_CYAN}cursor${C_RESET}    ${C_DIM}# Cursor account${C_RESET}"
+fi
 
 echo ""
 echo "${C_BOLD}${C_YELLOW}▸ Terminal font (IMPORTANT)${C_RESET}"

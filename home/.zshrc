@@ -84,10 +84,14 @@ if command -v bat &>/dev/null; then
 fi
 
 if [[ "$IS_WSL" -eq 1 ]]; then
+  # In WSL, route GUI editors to their Windows counterparts (via WSL extension).
+  # This avoids the slow/buggy Linux GUI rendering via WSLg.
   alias code="code.exe"
+  alias cursor="cursor.exe"
   alias explorer="explorer.exe"
 else
   alias code="/usr/local/bin/code"
+  alias cursor="/usr/local/bin/cursor"
 fi
 
 # ----- 7. Functions -----
