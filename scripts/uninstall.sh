@@ -165,17 +165,20 @@ if [ "$CATEGORY_ACTIVE" = "1" ]; then
   remove_tool "Terminal" "bat" 'command -v bat' 'sudo apt-get remove -y -qq bat'
   remove_tool "Terminal" "eza" 'command -v eza' 'sudo apt-get remove -y -qq eza'
   remove_tool "Terminal" "delta" 'command -v delta' 'sudo apt-get remove -y -qq git-delta'
-  remove_tool "Terminal" "atuin" 'command -v atuin' '
+  remove_tool "Terminal" "atuin" '[ -d "$HOME/.atuin" ] || command -v atuin' '
     # Remove binary wherever it lives
     atuin_path="$(command -v atuin 2>/dev/null)"
     [ -n "$atuin_path" ] && sudo rm -f "$atuin_path"
     # Clean up install dirs and data
     rm -rf "$HOME/.atuin" "$HOME/.local/share/atuin" "$HOME/.config/atuin"
     rm -f "$HOME/.local/bin/atuin" "$HOME/.cargo/bin/atuin"
+    # Remove source lines from shell startup files
+    for f in "$HOME/.bashrc" "$HOME/.profile" "$HOME/.bash_profile" "$HOME/.zshrc" "$HOME/.zshenv" \
+             "$HOME/.bashrc.bak" "$HOME/.profile.bak" "$HOME/.zshrc.bak"; do
+      [ -f "$f" ] && sed -i "/\.atuin\/bin\/env/d;/atuin init/d" "$f"
+    done
     # Try uninstalling via package managers if installed that way
     sudo apt-get remove -y -qq atuin 2>/dev/null || true
-    # Verify
-    ! command -v atuin &>/dev/null
   '
   remove_tool "Terminal" "direnv" 'command -v direnv' 'sudo apt-get remove -y -qq direnv || rm -f "$HOME/.local/bin/direnv"'
   remove_tool "Terminal" "jq" 'command -v jq' 'sudo apt-get remove -y -qq jq'
