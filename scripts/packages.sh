@@ -1,12 +1,5 @@
 #!/usr/bin/env bash
 # Install packages. Each category is gated by an env var (defaults to 1 = install).
-# Categories:
-#   INSTALL_SHELL     — oh-my-zsh, plugins, fzf, tmux tpm, nerd fonts
-#   INSTALL_K8S       — kubectl, kubectx/kubens, minikube, helm, k9s, stern, kustomize, argocd
-#   INSTALL_CLOUD     — aws-cli, ssm-plugin, terraform, openvpn
-#   INSTALL_DEV       — docker, python/pipx, bun, gh, claude-cli
-#   INSTALL_TERMINAL  — zoxide, bat, eza, delta, atuin, direnv
-#   INSTALL_EDITORS   — vscode, cursor
 set -euo pipefail
 
 : "${INSTALL_SHELL:=1}"
@@ -16,9 +9,40 @@ set -euo pipefail
 : "${INSTALL_TERMINAL:=1}"
 : "${INSTALL_EDITORS:=1}"
 
+if [ -t 1 ]; then
+  C_CYAN=$'\033[36m'; C_GREEN=$'\033[32m'; C_YELLOW=$'\033[33m'
+  C_RED=$'\033[31m'; C_DIM=$'\033[2m'; C_BOLD=$'\033[1m'; C_RESET=$'\033[0m'
+else
+  C_CYAN=""; C_GREEN=""; C_YELLOW=""; C_RED=""; C_DIM=""; C_BOLD=""; C_RESET=""
+fi
+
+# Tracking: category → list of "name:status" entries
+declare -A CATEGORIES
+declare -a CATEGORY_ORDER=("Shell" "Kubernetes" "Cloud" "Dev" "Terminal" "Editors")
+
+track() {
+  local category="$1" tool="$2" status="$3"
+  CATEGORIES["$category"]+="${tool}:${status}|"
+}
+
+# Usage: install_tool <category> <name> <present-check-cmd> <install-block-as-string>
+install_tool() {
+  local category="$1" name="$2" check="$3" install_cmd="$4"
+  if eval "$check" &>/dev/null; then
+    track "$category" "$name" "present"
+    return 0
+  fi
+  echo "==> Installing $name"
+  if eval "$install_cmd"; then
+    track "$category" "$name" "installed"
+  else
+    track "$category" "$name" "failed"
+  fi
+}
+
 is_installed() { command -v "$1" &>/dev/null; }
 
-echo "==> Installing base system packages"
+echo "${C_BOLD}${C_CYAN}==> Installing base system packages${C_RESET}"
 sudo apt-get update -qq
 sudo apt-get install -y -qq git curl wget zsh tmux unzip build-essential jq
 
@@ -26,252 +50,155 @@ sudo apt-get install -y -qq git curl wget zsh tmux unzip build-essential jq
 # SHELL
 # ════════════════════════════════════════════════════════════════════════════
 if [ "$INSTALL_SHELL" = "1" ]; then
-  if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    echo "==> Installing Oh-My-Zsh"
-    RUNZSH=no CHSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-  fi
-
   ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
-  if [ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]; then
-    echo "==> Installing zsh-autosuggestions"
-    git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
-  fi
 
-  if [ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]; then
-    echo "==> Installing zsh-syntax-highlighting"
-    git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
-  fi
+  install_tool "Shell" "oh-my-zsh" '[ -d "$HOME/.oh-my-zsh" ]' \
+    'RUNZSH=no CHSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
 
-  if [ ! -d "$HOME/.fzf" ]; then
-    echo "==> Installing fzf"
-    git clone --depth=1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
-    "$HOME/.fzf/install" --all --no-bash --no-fish
-  fi
+  install_tool "Shell" "zsh-autosuggestions" '[ -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]' \
+    'git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions"'
 
-  if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
-    echo "==> Installing tmux plugin manager"
-    git clone --depth=1 https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
-  fi
+  install_tool "Shell" "zsh-syntax-highlighting" '[ -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]' \
+    'git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"'
 
-  FONTS_DIR="${HOME}/.local/share/fonts"
-  if ! fc-list | grep -qi "JetBrainsMono"; then
-    echo "==> Installing JetBrainsMono Nerd Font"
-    mkdir -p "$FONTS_DIR"
-    curl -fsSL "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz" \
-      | tar -xJ -C "$FONTS_DIR"
-    fc-cache -fv "$FONTS_DIR" &>/dev/null
-  fi
+  install_tool "Shell" "fzf" '[ -d "$HOME/.fzf" ]' \
+    'git clone --depth=1 https://github.com/junegunn/fzf.git "$HOME/.fzf" && "$HOME/.fzf/install" --all --no-bash --no-fish'
+
+  install_tool "Shell" "tmux-tpm" '[ -d "$HOME/.tmux/plugins/tpm" ]' \
+    'git clone --depth=1 https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"'
+
+  install_tool "Shell" "JetBrainsMono Nerd Font" 'fc-list | grep -qi JetBrainsMono' \
+    'mkdir -p "$HOME/.local/share/fonts" && curl -fsSL "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz" | tar -xJ -C "$HOME/.local/share/fonts" && fc-cache -f &>/dev/null'
 fi
 
 # ════════════════════════════════════════════════════════════════════════════
 # KUBERNETES
 # ════════════════════════════════════════════════════════════════════════════
 if [ "$INSTALL_K8S" = "1" ]; then
-  if ! is_installed kubectl; then
-    echo "==> Installing kubectl"
-    KUBECTL_VERSION="$(curl -fsSL https://dl.k8s.io/release/stable.txt)"
-    curl -fsSLo /tmp/kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
-    sudo install -o root -g root -m 0755 /tmp/kubectl /usr/local/bin/kubectl
-  fi
+  install_tool "Kubernetes" "kubectl" "is_installed kubectl" \
+    'V="$(curl -fsSL https://dl.k8s.io/release/stable.txt)" && curl -fsSLo /tmp/kubectl "https://dl.k8s.io/release/${V}/bin/linux/amd64/kubectl" && sudo install -m 0755 /tmp/kubectl /usr/local/bin/kubectl'
 
-  if ! is_installed minikube; then
-    echo "==> Installing minikube"
-    curl -fsSLo /tmp/minikube "https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64"
-    sudo install -m 0755 /tmp/minikube /usr/local/bin/minikube
-    rm /tmp/minikube
-  fi
+  install_tool "Kubernetes" "minikube" "is_installed minikube" \
+    'curl -fsSLo /tmp/minikube "https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64" && sudo install -m 0755 /tmp/minikube /usr/local/bin/minikube && rm /tmp/minikube'
 
-  if ! is_installed kubectx; then
-    echo "==> Installing kubectx/kubens"
-    sudo git clone --depth=1 https://github.com/ahmetb/kubectx /opt/kubectx
-    sudo ln -sf /opt/kubectx/kubectx /usr/local/bin/kubectx
-    sudo ln -sf /opt/kubectx/kubens /usr/local/bin/kubens
-  fi
+  install_tool "Kubernetes" "kubectx/kubens" "is_installed kubectx" \
+    'sudo git clone --depth=1 https://github.com/ahmetb/kubectx /opt/kubectx && sudo ln -sf /opt/kubectx/kubectx /usr/local/bin/kubectx && sudo ln -sf /opt/kubectx/kubens /usr/local/bin/kubens'
 
-  if ! is_installed helm; then
-    echo "==> Installing Helm"
-    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-  fi
+  install_tool "Kubernetes" "helm" "is_installed helm" \
+    'curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash'
 
-  if ! is_installed k9s; then
-    echo "==> Installing k9s"
-    K9S_VERSION="$(curl -fsSL https://api.github.com/repos/derailed/k9s/releases/latest | grep tag_name | cut -d'"' -f4)"
-    curl -fsSLo /tmp/k9s.tar.gz "https://github.com/derailed/k9s/releases/download/${K9S_VERSION}/k9s_Linux_amd64.tar.gz"
-    tar -xzf /tmp/k9s.tar.gz -C /tmp k9s
-    sudo install -m 0755 /tmp/k9s /usr/local/bin/k9s
-    rm /tmp/k9s.tar.gz /tmp/k9s
-  fi
+  install_tool "Kubernetes" "k9s" "is_installed k9s" \
+    'V="$(curl -fsSL https://api.github.com/repos/derailed/k9s/releases/latest | grep tag_name | cut -d"\"" -f4)" && curl -fsSLo /tmp/k9s.tar.gz "https://github.com/derailed/k9s/releases/download/${V}/k9s_Linux_amd64.tar.gz" && tar -xzf /tmp/k9s.tar.gz -C /tmp k9s && sudo install -m 0755 /tmp/k9s /usr/local/bin/k9s && rm /tmp/k9s.tar.gz /tmp/k9s'
 
-  if ! is_installed stern; then
-    echo "==> Installing stern"
-    STERN_VERSION="$(curl -fsSL https://api.github.com/repos/stern/stern/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d v)"
-    curl -fsSLo /tmp/stern.tar.gz "https://github.com/stern/stern/releases/download/v${STERN_VERSION}/stern_${STERN_VERSION}_linux_amd64.tar.gz"
-    tar -xzf /tmp/stern.tar.gz -C /tmp stern
-    sudo install -m 0755 /tmp/stern /usr/local/bin/stern
-    rm /tmp/stern.tar.gz /tmp/stern
-  fi
+  install_tool "Kubernetes" "stern" "is_installed stern" \
+    'V="$(curl -fsSL https://api.github.com/repos/stern/stern/releases/latest | grep tag_name | cut -d"\"" -f4 | tr -d v)" && curl -fsSLo /tmp/stern.tar.gz "https://github.com/stern/stern/releases/download/v${V}/stern_${V}_linux_amd64.tar.gz" && tar -xzf /tmp/stern.tar.gz -C /tmp stern && sudo install -m 0755 /tmp/stern /usr/local/bin/stern && rm /tmp/stern.tar.gz /tmp/stern'
 
-  if ! is_installed kustomize; then
-    echo "==> Installing kustomize"
-    curl -fsSL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
-    sudo mv kustomize /usr/local/bin/kustomize
-  fi
+  install_tool "Kubernetes" "kustomize" "is_installed kustomize" \
+    'curl -fsSL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash && sudo mv kustomize /usr/local/bin/kustomize'
 
-  if ! is_installed argocd; then
-    echo "==> Installing ArgoCD CLI"
-    ARGOCD_VERSION="$(curl -fsSL https://raw.githubusercontent.com/argoproj/argo-cd/stable/VERSION)"
-    curl -fsSLo /tmp/argocd "https://github.com/argoproj/argo-cd/releases/download/v${ARGOCD_VERSION}/argocd-linux-amd64"
-    sudo install -m 0755 /tmp/argocd /usr/local/bin/argocd
-  fi
+  install_tool "Kubernetes" "argocd" "is_installed argocd" \
+    'V="$(curl -fsSL https://raw.githubusercontent.com/argoproj/argo-cd/stable/VERSION)" && curl -fsSLo /tmp/argocd "https://github.com/argoproj/argo-cd/releases/download/v${V}/argocd-linux-amd64" && sudo install -m 0755 /tmp/argocd /usr/local/bin/argocd'
 fi
 
 # ════════════════════════════════════════════════════════════════════════════
-# CLOUD (AWS, Terraform, VPN)
+# CLOUD
 # ════════════════════════════════════════════════════════════════════════════
 if [ "$INSTALL_CLOUD" = "1" ]; then
-  if ! is_installed aws; then
-    echo "==> Installing AWS CLI v2"
-    curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
-    unzip -q /tmp/awscliv2.zip -d /tmp/awscliv2
-    sudo /tmp/awscliv2/aws/install
-    rm -rf /tmp/awscliv2 /tmp/awscliv2.zip
-  fi
+  install_tool "Cloud" "aws-cli" "is_installed aws" \
+    'curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip && unzip -q /tmp/awscliv2.zip -d /tmp/awscliv2 && sudo /tmp/awscliv2/aws/install && rm -rf /tmp/awscliv2 /tmp/awscliv2.zip'
 
-  if ! is_installed session-manager-plugin; then
-    echo "==> Installing AWS Session Manager Plugin"
-    curl -fsSLo /tmp/ssm-plugin.deb "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb"
-    sudo dpkg -i /tmp/ssm-plugin.deb
-    rm /tmp/ssm-plugin.deb
-  fi
+  install_tool "Cloud" "ssm-plugin" "is_installed session-manager-plugin" \
+    'curl -fsSLo /tmp/ssm.deb "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" && sudo dpkg -i /tmp/ssm.deb && rm /tmp/ssm.deb'
 
-  if ! is_installed terraform; then
-    echo "==> Installing Terraform"
-    TF_VERSION="$(curl -fsSL https://checkpoint-api.hashicorp.com/v1/check/terraform | jq -r '.current_version')"
-    wget -qO /tmp/terraform.zip "https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip"
-    unzip -q /tmp/terraform.zip -d /tmp/terraform
-    sudo install -m 0755 /tmp/terraform/terraform /usr/local/bin/terraform
-    rm -rf /tmp/terraform /tmp/terraform.zip
-  fi
+  install_tool "Cloud" "terraform" "is_installed terraform" \
+    'V="$(curl -fsSL https://checkpoint-api.hashicorp.com/v1/check/terraform | jq -r .current_version)" && wget -qO /tmp/tf.zip "https://releases.hashicorp.com/terraform/${V}/terraform_${V}_linux_amd64.zip" && unzip -q /tmp/tf.zip -d /tmp/tf && sudo install -m 0755 /tmp/tf/terraform /usr/local/bin/terraform && rm -rf /tmp/tf /tmp/tf.zip'
 
-  if ! is_installed openvpn; then
-    echo "==> Installing OpenVPN"
-    sudo apt-get install -y -qq openvpn
-  fi
+  install_tool "Cloud" "openvpn" "is_installed openvpn" \
+    'sudo apt-get install -y -qq openvpn'
 fi
 
 # ════════════════════════════════════════════════════════════════════════════
-# DEV (Docker, Python, Bun, gh, Claude CLI)
+# DEV
 # ════════════════════════════════════════════════════════════════════════════
 if [ "$INSTALL_DEV" = "1" ]; then
-  if ! is_installed docker; then
-    echo "==> Installing Docker"
-    curl -fsSL https://get.docker.com | bash
-    sudo usermod -aG docker "$USER"
-    echo "  Note: log out and back in for docker group to take effect"
-  fi
+  install_tool "Dev" "docker" "is_installed docker" \
+    'curl -fsSL https://get.docker.com | bash && sudo usermod -aG docker "$USER"'
 
-  if ! is_installed python3; then
-    echo "==> Installing Python3"
-    sudo apt-get install -y -qq python3 python3-pip python3-venv pipx
-  fi
-  if ! is_installed pipx; then
-    sudo apt-get install -y -qq pipx
-    pipx ensurepath
-  fi
+  install_tool "Dev" "python3" "is_installed python3" \
+    'sudo apt-get install -y -qq python3 python3-pip python3-venv'
 
-  if ! is_installed bun; then
-    echo "==> Installing Bun"
-    curl -fsSL https://bun.sh/install | bash
-    export PATH="$HOME/.bun/bin:$PATH"
-  fi
+  install_tool "Dev" "pipx" "is_installed pipx" \
+    'sudo apt-get install -y -qq pipx && pipx ensurepath'
 
-  if ! is_installed gh; then
-    echo "==> Installing GitHub CLI"
-    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list
-    sudo apt-get update -qq && sudo apt-get install -y -qq gh
-  fi
+  install_tool "Dev" "bun" "is_installed bun" \
+    'curl -fsSL https://bun.sh/install | bash'
 
-  if ! is_installed claude; then
-    echo "==> Installing Claude Code CLI"
-    npm install -g @anthropic-ai/claude-code 2>/dev/null || \
-    bun install -g @anthropic-ai/claude-code
-  fi
+  install_tool "Dev" "gh" "is_installed gh" \
+    'curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list && sudo apt-get update -qq && sudo apt-get install -y -qq gh'
+
+  install_tool "Dev" "claude-cli" "is_installed claude" \
+    'npm install -g @anthropic-ai/claude-code 2>/dev/null || bun install -g @anthropic-ai/claude-code'
 fi
 
 # ════════════════════════════════════════════════════════════════════════════
-# TERMINAL (zoxide, bat, eza, delta, atuin, direnv)
+# TERMINAL
 # ════════════════════════════════════════════════════════════════════════════
 if [ "$INSTALL_TERMINAL" = "1" ]; then
-  if ! is_installed zoxide; then
-    echo "==> Installing zoxide"
-    curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
-  fi
+  install_tool "Terminal" "zoxide" "is_installed zoxide" \
+    'curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash'
 
-  if ! is_installed bat; then
-    echo "==> Installing bat"
-    sudo apt-get install -y -qq bat || \
-      { BAT_VERSION="$(curl -fsSL https://api.github.com/repos/sharkdp/bat/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d v)"
-        curl -fsSLo /tmp/bat.deb "https://github.com/sharkdp/bat/releases/download/v${BAT_VERSION}/bat_${BAT_VERSION}_amd64.deb"
-        sudo dpkg -i /tmp/bat.deb && rm /tmp/bat.deb; }
-  fi
+  install_tool "Terminal" "bat" "is_installed bat" \
+    'sudo apt-get install -y -qq bat || { V="$(curl -fsSL https://api.github.com/repos/sharkdp/bat/releases/latest | grep tag_name | cut -d\"\\\"\" -f4 | tr -d v)"; curl -fsSLo /tmp/bat.deb "https://github.com/sharkdp/bat/releases/download/v${V}/bat_${V}_amd64.deb"; sudo dpkg -i /tmp/bat.deb && rm /tmp/bat.deb; }'
 
-  if ! is_installed eza; then
-    echo "==> Installing eza"
-    sudo apt-get install -y -qq gpg
-    sudo mkdir -p /etc/apt/keyrings
-    wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
-    echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" | sudo tee /etc/apt/sources.list.d/gierens.list
-    sudo apt-get update -qq && sudo apt-get install -y -qq eza
-  fi
+  install_tool "Terminal" "eza" "is_installed eza" \
+    'sudo mkdir -p /etc/apt/keyrings && wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg && echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" | sudo tee /etc/apt/sources.list.d/gierens.list && sudo apt-get update -qq && sudo apt-get install -y -qq eza'
 
-  if ! is_installed delta; then
-    echo "==> Installing delta"
-    DELTA_VERSION="$(curl -fsSL https://api.github.com/repos/dandavison/delta/releases/latest | grep tag_name | cut -d'"' -f4)"
-    curl -fsSLo /tmp/delta.deb "https://github.com/dandavison/delta/releases/download/${DELTA_VERSION}/git-delta_${DELTA_VERSION}_amd64.deb"
-    sudo dpkg -i /tmp/delta.deb && rm /tmp/delta.deb
-  fi
+  install_tool "Terminal" "delta" "is_installed delta" \
+    'V="$(curl -fsSL https://api.github.com/repos/dandavison/delta/releases/latest | grep tag_name | cut -d"\"" -f4)" && curl -fsSLo /tmp/delta.deb "https://github.com/dandavison/delta/releases/download/${V}/git-delta_${V}_amd64.deb" && sudo dpkg -i /tmp/delta.deb && rm /tmp/delta.deb'
 
-  if ! is_installed atuin; then
-    echo "==> Installing atuin"
-    curl -fsSL https://setup.atuin.sh | bash
-  fi
+  install_tool "Terminal" "atuin" "is_installed atuin" \
+    'curl -fsSL https://setup.atuin.sh | bash'
 
-  if ! is_installed direnv; then
-    echo "==> Installing direnv"
-    curl -fsSL https://direnv.net/install.sh | bash
-  fi
+  install_tool "Terminal" "direnv" "is_installed direnv" \
+    'curl -fsSL https://direnv.net/install.sh | bash'
 fi
 
 # ════════════════════════════════════════════════════════════════════════════
-# EDITORS (VS Code, Cursor)
+# EDITORS
 # ════════════════════════════════════════════════════════════════════════════
 if [ "$INSTALL_EDITORS" = "1" ]; then
-  if ! is_installed code; then
-    echo "==> Installing VS Code"
-    curl -fsSL "https://packages.microsoft.com/keys/microsoft.asc" | sudo gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/code stable main" \
-      | sudo tee /etc/apt/sources.list.d/vscode.list
-    sudo apt-get update -qq && sudo apt-get install -y -qq code
-  fi
+  install_tool "Editors" "vscode" "is_installed code" \
+    'curl -fsSL "https://packages.microsoft.com/keys/microsoft.asc" | sudo gpg --dearmor -o /usr/share/keyrings/microsoft.gpg && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/code stable main" | sudo tee /etc/apt/sources.list.d/vscode.list && sudo apt-get update -qq && sudo apt-get install -y -qq code'
 
-  if ! is_installed cursor; then
-    echo "==> Installing Cursor"
-    (
-      set +e
-      CURSOR_URL="$(curl -fsSL "https://www.cursor.com/api/download?platform=linux-x64&releaseTrack=stable" 2>/dev/null \
-        | jq -r '.downloadUrl // .url // empty')"
-      if [ -z "$CURSOR_URL" ]; then
-        echo "  WARN: could not resolve Cursor download URL, skipping"
-      else
-        curl -fsSLo /tmp/cursor.AppImage "$CURSOR_URL" && \
-          chmod +x /tmp/cursor.AppImage && \
-          sudo mv /tmp/cursor.AppImage /usr/local/bin/cursor && \
-          echo "  Cursor installed" || \
-          echo "  WARN: Cursor install failed, skipping"
-      fi
-    )
-  fi
+  install_tool "Editors" "cursor" "is_installed cursor" \
+    'URL="$(curl -fsSL "https://www.cursor.com/api/download?platform=linux-x64&releaseTrack=stable" 2>/dev/null | jq -r ".downloadUrl // .url // empty")" && [ -n "$URL" ] && curl -fsSLo /tmp/cursor.AppImage "$URL" && chmod +x /tmp/cursor.AppImage && sudo mv /tmp/cursor.AppImage /usr/local/bin/cursor'
 fi
 
-echo "==> All selected packages installed."
+# ════════════════════════════════════════════════════════════════════════════
+# SUMMARY
+# ════════════════════════════════════════════════════════════════════════════
+echo ""
+echo "${C_BOLD}${C_CYAN}╔══════════════════════════════════════════════════════════════════╗${C_RESET}"
+echo "${C_BOLD}${C_CYAN}║                      Packages Installed                          ║${C_RESET}"
+echo "${C_BOLD}${C_CYAN}╚══════════════════════════════════════════════════════════════════╝${C_RESET}"
+
+for cat in "${CATEGORY_ORDER[@]}"; do
+  entries="${CATEGORIES[$cat]:-}"
+  [ -z "$entries" ] && continue
+  echo ""
+  echo "  ${C_BOLD}${C_YELLOW}▸ $cat${C_RESET}"
+  IFS='|' read -ra items <<< "$entries"
+  for item in "${items[@]}"; do
+    [ -z "$item" ] && continue
+    name="${item%:*}"; status="${item##*:}"
+    case "$status" in
+      installed) icon="${C_GREEN}+ installed${C_RESET}" ;;
+      present)   icon="${C_DIM}= present  ${C_RESET}" ;;
+      failed)    icon="${C_RED}✗ failed   ${C_RESET}" ;;
+    esac
+    printf "      %b  %s\n" "$icon" "$name"
+  done
+done
+
+echo ""
+echo "${C_BOLD}${C_GREEN}==> All selected packages processed.${C_RESET}"
