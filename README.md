@@ -8,6 +8,12 @@ DevOps/Cloud engineering workstation configuration.
 curl -fsSL https://raw.githubusercontent.com/Bedatty-Engineering/dotfiles/main/scripts/install.sh | bash
 ```
 
+## Uninstall
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Bedatty-Engineering/dotfiles/main/scripts/uninstall.sh | bash
+```
+
 ## What's included
 
 | File | Description |

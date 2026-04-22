@@ -1,9 +1,23 @@
 #!/usr/bin/env bash
 # Reverts everything done by install.sh and leaves the system as it was.
+# Can be run with:
+#   curl -fsSL https://raw.githubusercontent.com/Bedatty-Engineering/dotfiles/main/scripts/uninstall.sh | bash
 set -uo pipefail
 
-DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REPO_DIR="$(cd "$DOTFILES_DIR/.." && pwd)"
+# Locate the dotfiles repo. When run via curl|bash the script has no local path,
+# so fall back to the conventional location at $HOME/dotfiles.
+if [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
+  DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+else
+  DOTFILES_DIR="$HOME/dotfiles"
+fi
+REPO_DIR="$DOTFILES_DIR"
+
+if [ ! -d "$DOTFILES_DIR/home" ]; then
+  echo "Could not locate dotfiles repo at $DOTFILES_DIR"
+  echo "Clone it first or run this script from inside the repo."
+  exit 1
+fi
 
 # ── Colors ────────────────────────────────────────────────────────────────────
 if [ -t 1 ]; then
