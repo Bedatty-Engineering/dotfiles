@@ -146,6 +146,8 @@ if ask "Install packages?"; then
     [ -z "$selected" ] && selected="(none selected)"
   fi
 
+  PACKAGES_SUMMARY_FILE="$HOME/.cache/dotfiles-packages-summary.txt"
+  export PACKAGES_SUMMARY_FILE
   if bash "$DOTFILES_DIR/scripts/packages.sh"; then
     record "Packages" "ok" "categories: $selected"
     step_done "Packages"
@@ -220,13 +222,93 @@ for name in "${STEP_ORDER[@]}"; do
   printf "  %-16s %b %s\n" "$name" "$icon" "${C_DIM}${detail}${C_RESET}"
 done
 
-# ── 5. Next steps ─────────────────────────────────────────────────────────────
+# ── 5. Packages detail (re-print so it's at the end, not scrolled up) ────────
+if [ -f "${PACKAGES_SUMMARY_FILE:-}" ]; then
+  echo ""
+  cat "$PACKAGES_SUMMARY_FILE"
+fi
+
+# ── 6. Next steps ─────────────────────────────────────────────────────────────
 echo ""
-echo "${C_BOLD}${C_YELLOW}Next steps (manual):${C_RESET}"
-echo "  1. Restart shell or run: ${C_CYAN}exec zsh${C_RESET}"
-echo "  2. Copy SSH keys to ~/.ssh/ and ${C_CYAN}chmod 600${C_RESET} them"
-echo "  3. ${C_CYAN}aws sso login --profile <profile>${C_RESET}"
-echo "  4. Copy kubeconfigs to ~/.kube/*-config"
-echo "  5. ${C_CYAN}ssh-add ~/.ssh/company_github_key${C_RESET}"
-echo "  6. ${C_CYAN}atuin register${C_RESET} (optional — enable history sync)"
+echo "${C_BOLD}${C_CYAN}╔══════════════════════════════════════════════════════════════════╗${C_RESET}"
+echo "${C_BOLD}${C_CYAN}║                     Next Steps (manual)                           ║${C_RESET}"
+echo "${C_BOLD}${C_CYAN}╚══════════════════════════════════════════════════════════════════╝${C_RESET}"
+
+echo ""
+echo "${C_BOLD}${C_YELLOW}▸ Shell${C_RESET}"
+echo "  Apply zsh as current shell:"
+echo "      ${C_CYAN}exec zsh${C_RESET}   ${C_DIM}# or log out and back in${C_RESET}"
+
+echo ""
+echo "${C_BOLD}${C_YELLOW}▸ SSH keys${C_RESET}"
+echo "  Copy your keys to ~/.ssh/ (github key, cluster keys, etc.):"
+echo "      ${C_CYAN}cp /path/to/company_github_key ~/.ssh/${C_RESET}"
+echo "      ${C_CYAN}chmod 600 ~/.ssh/company_github_key${C_RESET}"
+echo "      ${C_CYAN}ssh-add ~/.ssh/company_github_key${C_RESET}"
+echo "  Test: ${C_CYAN}ssh -T git@github.com${C_RESET}"
+echo "  Reference: ${C_DIM}$DOTFILES_DIR/config/ssh/config.example${C_RESET}"
+
+echo ""
+echo "${C_BOLD}${C_YELLOW}▸ AWS (SSO)${C_RESET}"
+echo "  The ~/.aws/config is already linked (profiles defined as placeholders)."
+echo "  Edit with your real account IDs:"
+echo "      ${C_CYAN}\$EDITOR $DOTFILES_DIR/config/aws/config${C_RESET}"
+echo "  Login to SSO:"
+echo "      ${C_CYAN}aws sso login --profile <profile>${C_RESET}"
+echo "  Switch profile interactively:"
+echo "      ${C_CYAN}awsp${C_RESET}   ${C_DIM}# fzf-based profile picker${C_RESET}"
+
+echo ""
+echo "${C_BOLD}${C_YELLOW}▸ Kubernetes${C_RESET}"
+echo "  Copy cluster kubeconfigs (one per cluster) to ~/.kube/:"
+echo "      ${C_CYAN}cp /path/to/alpha-k8s-config ~/.kube/${C_RESET}"
+echo "  The .zshrc merges all *-config files automatically."
+echo "  Switch cluster:   ${C_CYAN}kctx${C_RESET}   (alias of kubectx)"
+echo "  Switch namespace: ${C_CYAN}kns${C_RESET}    (alias of kubens)"
+echo "  UI for pods/logs: ${C_CYAN}k9s${C_RESET}"
+echo "  Reference: ${C_DIM}$DOTFILES_DIR/config/kube/config.example${C_RESET}"
+
+echo ""
+echo "${C_BOLD}${C_YELLOW}▸ ArgoCD${C_RESET}"
+echo "  Login to your ArgoCD server:"
+echo "      ${C_CYAN}argocd login <argocd.example.com>${C_RESET}"
+echo "  or via SSO:"
+echo "      ${C_CYAN}argocd login <argocd.example.com> --sso${C_RESET}"
+
+echo ""
+echo "${C_BOLD}${C_YELLOW}▸ GitHub CLI${C_RESET}"
+echo "      ${C_CYAN}gh auth login${C_RESET}   ${C_DIM}# follow interactive prompts${C_RESET}"
+
+echo ""
+echo "${C_BOLD}${C_YELLOW}▸ NPM (Lerian packages)${C_RESET}"
+echo "      ${C_CYAN}echo '//npm.pkg.github.com/:_authToken=YOUR_TOKEN' >> ~/.npmrc${C_RESET}"
+
+echo ""
+echo "${C_BOLD}${C_YELLOW}▸ Docker${C_RESET}"
+echo "  User was added to docker group — log out/in for it to take effect:"
+echo "      ${C_CYAN}docker run hello-world${C_RESET}   ${C_DIM}# verify${C_RESET}"
+
+echo ""
+echo "${C_BOLD}${C_YELLOW}▸ tmux plugins${C_RESET}"
+echo "  Start tmux and press ${C_CYAN}prefix + I${C_RESET} (Ctrl+B, then Shift+I) to install plugins"
+
+echo ""
+echo "${C_BOLD}${C_YELLOW}▸ atuin (shell history sync — optional)${C_RESET}"
+echo "  Create account and sync history across machines:"
+echo "      ${C_CYAN}atuin register -u <username> -e <email>${C_RESET}"
+echo "      ${C_CYAN}atuin import auto${C_RESET}   ${C_DIM}# import existing history${C_RESET}"
+echo "  Or just use locally without account: ${C_CYAN}Ctrl+R${C_RESET} to search history"
+
+echo ""
+echo "${C_BOLD}${C_YELLOW}▸ VS Code / Cursor${C_RESET}"
+echo "  Sign in to sync settings and extensions:"
+echo "      ${C_CYAN}code${C_RESET}      ${C_DIM}# GitHub/Microsoft sign-in${C_RESET}"
+echo "      ${C_CYAN}cursor${C_RESET}    ${C_DIM}# Cursor account${C_RESET}"
+
+echo ""
+echo "${C_BOLD}${C_YELLOW}▸ Terminal font (IMPORTANT)${C_RESET}"
+echo "  Configure your terminal to use ${C_CYAN}JetBrainsMono Nerd Font${C_RESET}"
+echo "  (otherwise eza icons and prompt symbols will appear broken)"
+echo "  ${C_DIM}WSL → Windows Terminal: settings.json → profile → \"font\": { \"face\": \"JetBrainsMono Nerd Font\" }${C_RESET}"
+
 echo ""

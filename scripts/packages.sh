@@ -187,29 +187,34 @@ fi
 # ════════════════════════════════════════════════════════════════════════════
 # SUMMARY
 # ════════════════════════════════════════════════════════════════════════════
-echo ""
-echo "${C_BOLD}${C_CYAN}╔══════════════════════════════════════════════════════════════════╗${C_RESET}"
-echo "${C_BOLD}${C_CYAN}║                      Packages Installed                          ║${C_RESET}"
-echo "${C_BOLD}${C_CYAN}╚══════════════════════════════════════════════════════════════════╝${C_RESET}"
+SUMMARY_FILE="${PACKAGES_SUMMARY_FILE:-$HOME/.cache/dotfiles-packages-summary.txt}"
+mkdir -p "$(dirname "$SUMMARY_FILE")"
 
-for cat in "${CATEGORY_ORDER[@]}"; do
-  entries="${CATEGORIES[$cat]:-}"
-  [ -z "$entries" ] && continue
-  echo ""
-  echo "  ${C_BOLD}${C_YELLOW}▸ $cat${C_RESET}"
-  IFS='|' read -ra items <<< "$entries"
-  for item in "${items[@]}"; do
-    [ -z "$item" ] && continue
-    name="${item%:*}"; status="${item##*:}"
-    case "$status" in
-      installed) icon="${C_GREEN}+ installed${C_RESET}" ;;
-      present)   icon="${C_DIM}= present  ${C_RESET}" ;;
-      skipped)   icon="${C_DIM}○ skipped  ${C_RESET}" ;;
-      failed)    icon="${C_RED}✗ failed   ${C_RESET}" ;;
-    esac
-    printf "      %b  %s\n" "$icon" "$name"
+build_summary() {
+  echo "${C_BOLD}${C_CYAN}╔══════════════════════════════════════════════════════════════════╗${C_RESET}"
+  echo "${C_BOLD}${C_CYAN}║                      Packages Installed                          ║${C_RESET}"
+  echo "${C_BOLD}${C_CYAN}╚══════════════════════════════════════════════════════════════════╝${C_RESET}"
+  for cat in "${CATEGORY_ORDER[@]}"; do
+    entries="${CATEGORIES[$cat]:-}"
+    [ -z "$entries" ] && continue
+    echo ""
+    echo "  ${C_BOLD}${C_YELLOW}▸ $cat${C_RESET}"
+    IFS='|' read -ra items <<< "$entries"
+    for item in "${items[@]}"; do
+      [ -z "$item" ] && continue
+      name="${item%:*}"; status="${item##*:}"
+      case "$status" in
+        installed) icon="${C_GREEN}+ installed${C_RESET}" ;;
+        present)   icon="${C_DIM}= present  ${C_RESET}" ;;
+        skipped)   icon="${C_DIM}○ skipped  ${C_RESET}" ;;
+        failed)    icon="${C_RED}✗ failed   ${C_RESET}" ;;
+      esac
+      printf "      %b  %s\n" "$icon" "$name"
+    done
   done
-done
+}
 
+echo ""
+build_summary | tee "$SUMMARY_FILE"
 echo ""
 echo "${C_BOLD}${C_GREEN}==> All selected packages processed.${C_RESET}"
