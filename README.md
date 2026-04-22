@@ -6,23 +6,27 @@ DevOps/Cloud engineering workstation. One-command setup from a fresh Ubuntu/WSL 
 
 ## Quick Install
 
+**Auto-accept, install everything (recommended):**
+```bash
+curl -fsSL https://raw.githubusercontent.com/Bedatty-Engineering/dotfiles/main/scripts/install.sh | bash -s -- -y
+```
+
 **Interactive** (choose categories and tools as you go):
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Bedatty-Engineering/dotfiles/main/scripts/install.sh | bash
 ```
 
-**Auto-accept** (install everything):
-```bash
-curl -fsSL https://raw.githubusercontent.com/Bedatty-Engineering/dotfiles/main/scripts/install.sh | bash -s -- -y
-```
-
 ## Uninstall
 
+**Auto-accept, remove everything (recommended):**
+```bash
+curl -fsSL https://raw.githubusercontent.com/Bedatty-Engineering/dotfiles/main/scripts/uninstall.sh | bash -s -- -y
+```
+
+**Interactive:**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Bedatty-Engineering/dotfiles/main/scripts/uninstall.sh | bash
 ```
-
-Add `-s -- -y` to remove everything without prompts.
 
 ---
 
