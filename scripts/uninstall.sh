@@ -19,6 +19,14 @@ if [ ! -d "$DOTFILES_DIR/home" ]; then
   exit 1
 fi
 
+AUTO_YES=0
+for arg in "$@"; do
+  case "$arg" in
+    -y|--yes) AUTO_YES=1 ;;
+    -h|--help) echo "Usage: uninstall.sh [-y|--yes]"; exit 0 ;;
+  esac
+done
+
 # ── Colors ────────────────────────────────────────────────────────────────────
 if [ -t 1 ]; then
   C_CYAN=$'\033[36m'; C_GREEN=$'\033[32m'; C_YELLOW=$'\033[33m'
@@ -42,13 +50,20 @@ header() {
 
 confirm() {
   local answer
-  if [ -t 0 ]; then
-    read -r -p "  $1 [y/N] " answer
-  else
-    read -r -p "  $1 [y/N] " answer </dev/tty
+  if [ "$AUTO_YES" -eq 1 ]; then
+    echo "  $1 [Y/n] ${C_DIM}(auto-yes)${C_RESET}"
+    return 0
   fi
-  [[ "${answer,,}" == "y" ]]
+  if [ -t 0 ]; then
+    read -r -p "  $1 [Y/n] " answer
+  else
+    read -r -p "  $1 [Y/n] " answer </dev/tty
+  fi
+  [[ "${answer,,}" != "n" ]]
 }
+
+step_done() { echo "  ${C_GREEN}✓${C_RESET} $1 ${C_DIM}removed${C_RESET}"; }
+step_skip() { echo "  ${C_DIM}○ $1 kept${C_RESET}"; }
 
 # Try a command; record ok/fail in one go
 try_remove() {

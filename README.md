@@ -4,14 +4,26 @@ DevOps/Cloud engineering workstation configuration.
 
 ## Quick Install
 
+Interactive:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Bedatty-Engineering/dotfiles/main/scripts/install.sh | bash
 ```
 
+Auto-accept all prompts:
+```bash
+curl -fsSL https://raw.githubusercontent.com/Bedatty-Engineering/dotfiles/main/scripts/install.sh | bash -s -- -y
+```
+
 ## Uninstall
 
+Interactive:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Bedatty-Engineering/dotfiles/main/scripts/uninstall.sh | bash
+```
+
+Auto-accept all prompts:
+```bash
+curl -fsSL https://raw.githubusercontent.com/Bedatty-Engineering/dotfiles/main/scripts/uninstall.sh | bash -s -- -y
 ```
 
 ## What's included

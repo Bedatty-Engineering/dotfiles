@@ -7,6 +7,14 @@ REPO_URL="https://github.com/Bedatty-Engineering/dotfiles.git"
 REPO_DIR="$HOME/dotfiles"
 DOTFILES_DIR="$REPO_DIR"
 
+AUTO_YES=0
+for arg in "$@"; do
+  case "$arg" in
+    -y|--yes) AUTO_YES=1 ;;
+    -h|--help) echo "Usage: install.sh [-y|--yes]"; exit 0 ;;
+  esac
+done
+
 # ── Colors ────────────────────────────────────────────────────────────────────
 if [ -t 1 ]; then
   C_CYAN=$'\033[36m'; C_GREEN=$'\033[32m'; C_YELLOW=$'\033[33m'
@@ -32,12 +40,26 @@ header() {
 
 ask() {
   local msg="$1" answer
+  if [ "$AUTO_YES" -eq 1 ]; then
+    echo "  $msg [Y/n] ${C_DIM}(auto-yes)${C_RESET}"
+    return 0
+  fi
   if [ -t 0 ]; then
     read -r -p "  $msg [Y/n] " answer
   else
     read -r -p "  $msg [Y/n] " answer </dev/tty
   fi
   [[ "${answer,,}" != "n" ]]
+}
+
+step_done() {
+  echo "  ${C_GREEN}✓${C_RESET} $1 ${C_DIM}complete${C_RESET}"
+}
+step_skip() {
+  echo "  ${C_DIM}○ $1 skipped${C_RESET}"
+}
+step_fail() {
+  echo "  ${C_RED}✗${C_RESET} $1 ${C_DIM}failed${C_RESET}"
 }
 
 # ── 1. Dependencies ───────────────────────────────────────────────────────────
@@ -74,44 +96,57 @@ echo "${C_BOLD}${C_CYAN}==> What would you like to do?${C_RESET}"
 if ask "Install packages (docker, k8s tools, aws, terraform, etc.)?"; then
   if bash "$DOTFILES_DIR/scripts/packages.sh"; then
     record "Packages" "ok" "see packages.sh for full list"
+    step_done "Packages"
   else
     record "Packages" "fail" "some installations failed"
+    step_fail "Packages"
   fi
 else
   record "Packages" "skip" "user chose not to install"
+  step_skip "Packages"
 fi
 
 if ask "Create dotfile symlinks in \$HOME?"; then
   if bash "$DOTFILES_DIR/scripts/link.sh"; then
     record "Symlinks" "ok" "dotfiles linked to \$HOME"
+    step_done "Symlinks"
   else
     record "Symlinks" "fail" "link.sh returned error"
+    step_fail "Symlinks"
   fi
 else
   record "Symlinks" "skip" "user chose not to link"
+  step_skip "Symlinks"
 fi
 
 if ask "Set zsh as default shell?"; then
   if [ "$SHELL" = "$(command -v zsh)" ]; then
     record "Default shell" "ok" "already zsh"
+    step_done "Default shell (already zsh)"
   elif sudo chsh -s "$(command -v zsh)" "$USER" 2>/dev/null; then
     record "Default shell" "ok" "set to zsh (logout to apply)"
+    step_done "Default shell set to zsh"
   else
     record "Default shell" "fail" "run manually: sudo chsh -s \$(which zsh) \$USER"
+    step_fail "Default shell"
   fi
 else
   record "Default shell" "skip" "user chose to keep current shell"
+  step_skip "Default shell"
 fi
 
 if ask "Install Ring (LerianStudio Claude skills and agents)?"; then
   if GIT_CONFIG_GLOBAL=/dev/null \
      bash -c "$(curl -fsSL https://raw.githubusercontent.com/lerianstudio/ring/main/install-ring.sh)"; then
     record "Ring" "ok" "ring-default plugin installed"
+    step_done "Ring"
   else
     record "Ring" "fail" "installer exited with error"
+    step_fail "Ring"
   fi
 else
   record "Ring" "skip" "user chose not to install"
+  step_skip "Ring"
 fi
 
 # ── 4. Summary ────────────────────────────────────────────────────────────────
