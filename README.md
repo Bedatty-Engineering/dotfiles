@@ -19,6 +19,15 @@ curl -fsSL https://raw.githubusercontent.com/Bedatty-Engineering/dotfiles/main/s
 curl -fsSL https://raw.githubusercontent.com/Bedatty-Engineering/dotfiles/main/scripts/install.sh | bash
 ```
 
+## Update
+
+Pull the latest dotfiles and refresh symlinks (detects what changed):
+```bash
+curl -fsSL https://raw.githubusercontent.com/Bedatty-Engineering/dotfiles/main/scripts/update.sh | bash
+```
+
+Add `-s -- -y` to auto-accept prompts.
+
 ## Uninstall
 
 **Auto-accept, remove everything (recommended):**
