@@ -39,17 +39,24 @@ header() {
 }
 
 ask() {
-  local msg="$1" answer
+  local msg="$1" default="${2:-y}" answer
+  local prompt="[Y/n]"
+  [ "$default" = "n" ] && prompt="[y/N]"
   if [ "$AUTO_YES" -eq 1 ]; then
-    echo "  $msg [Y/n] ${C_DIM}(auto-yes)${C_RESET}"
+    echo "  $msg $prompt ${C_DIM}(auto-yes)${C_RESET}"
     return 0
   fi
   if [ -t 0 ]; then
-    read -r -p "  $msg [Y/n] " answer
+    read -r -p "  $msg $prompt " answer
   else
-    read -r -p "  $msg [Y/n] " answer </dev/tty
+    read -r -p "  $msg $prompt " answer </dev/tty
   fi
-  [[ "${answer,,}" != "n" ]]
+  answer="${answer,,}"
+  if [ "$default" = "n" ]; then
+    [[ "$answer" == "y" ]]
+  else
+    [[ "$answer" != "n" ]]
+  fi
 }
 
 step_done() {
@@ -137,7 +144,7 @@ if ask "Install packages?"; then
       INSTALL_TERMINAL=1; selected+="terminal "
       pick_tools "Terminal" zoxide bat eza delta atuin direnv
     fi
-    if ask "  • Editors?"; then
+    if ask "  • Editors (install Linux builds — skip if on WSL using Windows apps)?" "n"; then
       INSTALL_EDITORS=1; selected+="editors "
       pick_tools "Editors" vscode cursor
     fi
