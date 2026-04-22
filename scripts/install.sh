@@ -93,9 +93,25 @@ fi
 echo ""
 echo "${C_BOLD}${C_CYAN}==> What would you like to do?${C_RESET}"
 
-if ask "Install packages (docker, k8s tools, aws, terraform, etc.)?"; then
+if ask "Install packages?"; then
+  if [ "$AUTO_YES" -eq 1 ]; then
+    export INSTALL_SHELL=1 INSTALL_K8S=1 INSTALL_CLOUD=1 INSTALL_DEV=1 INSTALL_TERMINAL=1 INSTALL_EDITORS=1
+    selected="all"
+  else
+    echo "    ${C_DIM}Choose which categories to install:${C_RESET}"
+    selected=""
+    INSTALL_SHELL=0;    ask "  • Shell tools (oh-my-zsh, fzf, tmux plugins, Nerd Fonts)?"             && INSTALL_SHELL=1    && selected+="shell "
+    INSTALL_K8S=0;      ask "  • Kubernetes (kubectl, kubectx, helm, k9s, stern, kustomize, argocd)?" && INSTALL_K8S=1      && selected+="k8s "
+    INSTALL_CLOUD=0;    ask "  • Cloud (aws cli, ssm, terraform, openvpn)?"                           && INSTALL_CLOUD=1    && selected+="cloud "
+    INSTALL_DEV=0;      ask "  • Dev tools (docker, python, bun, gh, claude cli)?"                    && INSTALL_DEV=1      && selected+="dev "
+    INSTALL_TERMINAL=0; ask "  • Terminal (zoxide, bat, eza, delta, atuin, direnv)?"                  && INSTALL_TERMINAL=1 && selected+="terminal "
+    INSTALL_EDITORS=0;  ask "  • Editors (vscode, cursor)?"                                           && INSTALL_EDITORS=1  && selected+="editors "
+    export INSTALL_SHELL INSTALL_K8S INSTALL_CLOUD INSTALL_DEV INSTALL_TERMINAL INSTALL_EDITORS
+    [ -z "$selected" ] && selected="(none selected)"
+  fi
+
   if bash "$DOTFILES_DIR/scripts/packages.sh"; then
-    record "Packages" "ok" "see packages.sh for full list"
+    record "Packages" "ok" "categories: $selected"
     step_done "Packages"
   else
     record "Packages" "fail" "some installations failed"
