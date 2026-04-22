@@ -25,9 +25,19 @@ track() {
   CATEGORIES["$category"]+="${tool}:${status}|"
 }
 
-# Usage: install_tool <category> <name> <present-check-cmd> <install-block-as-string>
+# Per-tool skip vars (SKIP_<UPPERCASE_NAME>=1 to skip that tool specifically)
+skip_key() {
+  echo "SKIP_$(echo "$1" | tr '[:lower:]- /' '[:upper:]___' | tr -cd 'A-Z_')"
+}
+
 install_tool() {
   local category="$1" name="$2" check="$3" install_cmd="$4"
+  local var
+  var="$(skip_key "$name")"
+  if [ "${!var:-0}" = "1" ]; then
+    track "$category" "$name" "skipped"
+    return 0
+  fi
   if eval "$check" &>/dev/null; then
     track "$category" "$name" "present"
     return 0
@@ -194,6 +204,7 @@ for cat in "${CATEGORY_ORDER[@]}"; do
     case "$status" in
       installed) icon="${C_GREEN}+ installed${C_RESET}" ;;
       present)   icon="${C_DIM}= present  ${C_RESET}" ;;
+      skipped)   icon="${C_DIM}○ skipped  ${C_RESET}" ;;
       failed)    icon="${C_RED}✗ failed   ${C_RESET}" ;;
     esac
     printf "      %b  %s\n" "$icon" "$name"

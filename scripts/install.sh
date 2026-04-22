@@ -93,6 +93,20 @@ fi
 echo ""
 echo "${C_BOLD}${C_CYAN}==> What would you like to do?${C_RESET}"
 
+# Helper: within a category, optionally ask per-tool and set SKIP_<NAME>=1
+pick_tools() {
+  local category_name="$1"; shift
+  local tools=("$@")
+  if ask "    Pick tools individually? (otherwise install all in this category)"; then
+    for tool in "${tools[@]}"; do
+      local var="SKIP_$(echo "$tool" | tr '[:lower:]- /' '[:upper:]___' | tr -cd 'A-Z_')"
+      if ! ask "      - $tool?"; then
+        export "$var=1"
+      fi
+    done
+  fi
+}
+
 if ask "Install packages?"; then
   if [ "$AUTO_YES" -eq 1 ]; then
     export INSTALL_SHELL=1 INSTALL_K8S=1 INSTALL_CLOUD=1 INSTALL_DEV=1 INSTALL_TERMINAL=1 INSTALL_EDITORS=1
@@ -100,12 +114,34 @@ if ask "Install packages?"; then
   else
     echo "    ${C_DIM}Choose which categories to install:${C_RESET}"
     selected=""
-    INSTALL_SHELL=0;    ask "  • Shell tools (oh-my-zsh, fzf, tmux plugins, Nerd Fonts)?"             && INSTALL_SHELL=1    && selected+="shell "
-    INSTALL_K8S=0;      ask "  • Kubernetes (kubectl, kubectx, helm, k9s, stern, kustomize, argocd)?" && INSTALL_K8S=1      && selected+="k8s "
-    INSTALL_CLOUD=0;    ask "  • Cloud (aws cli, ssm, terraform, openvpn)?"                           && INSTALL_CLOUD=1    && selected+="cloud "
-    INSTALL_DEV=0;      ask "  • Dev tools (docker, python, bun, gh, claude cli)?"                    && INSTALL_DEV=1      && selected+="dev "
-    INSTALL_TERMINAL=0; ask "  • Terminal (zoxide, bat, eza, delta, atuin, direnv)?"                  && INSTALL_TERMINAL=1 && selected+="terminal "
-    INSTALL_EDITORS=0;  ask "  • Editors (vscode, cursor)?"                                           && INSTALL_EDITORS=1  && selected+="editors "
+    INSTALL_SHELL=0;    INSTALL_K8S=0;      INSTALL_CLOUD=0
+    INSTALL_DEV=0;      INSTALL_TERMINAL=0; INSTALL_EDITORS=0
+
+    if ask "  • Shell tools?"; then
+      INSTALL_SHELL=1; selected+="shell "
+      pick_tools "Shell" oh-my-zsh zsh-autosuggestions zsh-syntax-highlighting fzf tmux-tpm "JetBrainsMono Nerd Font"
+    fi
+    if ask "  • Kubernetes?"; then
+      INSTALL_K8S=1; selected+="k8s "
+      pick_tools "Kubernetes" kubectl minikube kubectx/kubens helm k9s stern kustomize argocd
+    fi
+    if ask "  • Cloud?"; then
+      INSTALL_CLOUD=1; selected+="cloud "
+      pick_tools "Cloud" aws-cli ssm-plugin terraform openvpn
+    fi
+    if ask "  • Dev tools?"; then
+      INSTALL_DEV=1; selected+="dev "
+      pick_tools "Dev" docker python3 pipx bun gh claude-cli
+    fi
+    if ask "  • Terminal?"; then
+      INSTALL_TERMINAL=1; selected+="terminal "
+      pick_tools "Terminal" zoxide bat eza delta atuin direnv
+    fi
+    if ask "  • Editors?"; then
+      INSTALL_EDITORS=1; selected+="editors "
+      pick_tools "Editors" vscode cursor
+    fi
+
     export INSTALL_SHELL INSTALL_K8S INSTALL_CLOUD INSTALL_DEV INSTALL_TERMINAL INSTALL_EDITORS
     [ -z "$selected" ] && selected="(none selected)"
   fi
