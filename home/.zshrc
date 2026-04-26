@@ -90,6 +90,16 @@ if [[ "$IS_WSL" -eq 1 ]]; then
   # Wrappers are installed via Command Palette: "Shell Command: Install 'X' command in PATH"
   alias explorer="explorer.exe"
 
+  # Add Cursor / VS Code Windows binaries to PATH (auto-detect Windows user via glob)
+  setopt LOCAL_OPTIONS NULL_GLOB
+  for _win_bin in \
+    /mnt/c/Users/*/AppData/Local/Programs/Cursor/resources/app/bin \
+    /mnt/c/Users/*/AppData/Local/Programs/'Microsoft VS Code'/bin; do
+    [[ -d "$_win_bin" ]] && PATH="$PATH:$_win_bin"
+  done
+  unset _win_bin
+  export PATH
+
   # Warn if the wrappers are missing (only on interactive shells)
   if [[ -o interactive ]]; then
     for _cmd in code cursor; do
