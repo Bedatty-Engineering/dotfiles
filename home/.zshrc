@@ -84,11 +84,21 @@ if command -v bat &>/dev/null; then
 fi
 
 if [[ "$IS_WSL" -eq 1 ]]; then
-  # In WSL, route GUI editors to their Windows counterparts (via WSL extension).
-  # This avoids the slow/buggy Linux GUI rendering via WSLg.
-  alias code="code.exe"
-  alias cursor="cursor.exe"
+  # In WSL: don't alias code/cursor to *.exe — use the bash wrappers in PATH
+  # which properly translate Linux paths to Remote-WSL URIs (vscode-remote://wsl+<distro>/...).
+  # Calling the .exe directly opens via UNC path and skips Remote-WSL mode.
+  # Wrappers are installed via Command Palette: "Shell Command: Install 'X' command in PATH"
   alias explorer="explorer.exe"
+
+  # Warn if the wrappers are missing (only on interactive shells)
+  if [[ -o interactive ]]; then
+    for _cmd in code cursor; do
+      if ! command -v "$_cmd" &>/dev/null; then
+        echo "⚠  '$_cmd' wrapper not found in PATH. In $_cmd Windows: Command Palette → 'Shell Command: Install \"$_cmd\" command in PATH'"
+      fi
+    done
+    unset _cmd
+  fi
 else
   alias code="/usr/local/bin/code"
   alias cursor="/usr/local/bin/cursor"
